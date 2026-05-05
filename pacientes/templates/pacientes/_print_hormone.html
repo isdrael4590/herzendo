@@ -1,0 +1,29 @@
+<div class="hormone-group">
+  <div class="hormone-title">{{ title }}</div>
+  <div class="field-row">
+    <span class="field-label">Valor</span>
+    <span class="field-value{% if not value %} empty{% endif %}">
+      {% if value %}{{ value }}{% if unit %} <small class="text-muted">{{ unit }}</small>{% endif %}{% else %}—{% endif %}
+    </span>
+  </div>
+  <div class="field-row">
+    <span class="field-label">Ref. mínima</span>
+    <span class="field-value{% if not ref_min %} empty{% endif %}">
+      {% if ref_min %}{{ ref_min }}{% if unit %} <small class="text-muted">{{ unit }}</small>{% endif %}{% else %}—{% endif %}
+    </span>
+  </div>
+  <div class="field-row">
+    <span class="field-label">Ref. máxima</span>
+    <span class="field-value{% if not ref_max %} empty{% endif %}">
+      {% if ref_max %}{{ ref_max }}{% if unit %} <small class="text-muted">{{ unit }}</small>{% endif %}{% else %}—{% endif %}
+    </span>
+  </div>
+  <div class="field-row">
+    <span class="field-label">Interpretación</span>
+    <span class="field-value{% if not interp %} empty{% endif %}">
+      {% if interp %}
+        <span class="interp-badge badge-{{ interp }}">{{ interp|upper }}</span>
+      {% else %}—{% endif %}
+    </span>
+  </div>
+</div>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Iniciar Sesión — Gestión de Pacientes</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <style>
+    body {
+      min-height: 100vh;
+      background: linear-gradient(135deg, #0d3b66 0%, #1565c0 60%, #0288d1 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-card {
+      width: 100%;
+      max-width: 420px;
+      border: none;
+      border-radius: 1rem;
+      box-shadow: 0 8px 32px rgba(0,0,0,.35);
+    }
+    .login-header {
+      background: linear-gradient(135deg, #0d3b66, #1565c0);
+      border-radius: 1rem 1rem 0 0;
+      padding: 2rem;
+      text-align: center;
+      color: #fff;
+    }
+    .login-header .bi-hospital { font-size: 3rem; }
+    .login-body { padding: 2rem; }
+    .form-control:focus { border-color: #1565c0; box-shadow: 0 0 0 .2rem rgba(21,101,192,.25); }
+    .btn-login {
+      background: linear-gradient(135deg, #0d3b66, #1565c0);
+      border: none;
+      font-weight: 600;
+      letter-spacing: .5px;
+    }
+    .btn-login:hover { opacity: .9; }
+    .role-badge {
+      display: inline-block;
+      padding: .2rem .6rem;
+      border-radius: 1rem;
+      font-size: .75rem;
+      font-weight: 600;
+    }
+  </style>
+</head>
+<body>
+  <div class="login-card card">
+    <div class="login-header">
+      <i class="bi bi-hospital d-block mb-2"></i>
+      <h4 class="mb-0 fw-bold">Gestión de Pacientes</h4>
+      <p class="mb-0 opacity-75 small">Sistema de Registro Hipofisario</p>
+    </div>
+    <div class="login-body">
+      {% if form.errors %}
+      <div class="alert alert-danger py-2 small">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+        Usuario o contraseña incorrectos. Intente nuevamente.
+      </div>
+      {% endif %}
+
+      {% if messages %}
+        {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} py-2 small">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ next }}">
+
+        <div class="mb-3">
+          <label for="id_username" class="form-label fw-semibold">
+            <i class="bi bi-person-fill me-1 text-primary"></i>Usuario
+          </label>
+          <input type="text" name="username" id="id_username" autofocus autocomplete="username"
+                 class="form-control" placeholder="Ingrese su usuario">
+        </div>
+
+        <div class="mb-4">
+          <label for="id_password" class="form-label fw-semibold">
+            <i class="bi bi-lock-fill me-1 text-primary"></i>Contraseña
+          </label>
+          <div class="input-group">
+            <input type="password" name="password" id="id_password" autocomplete="current-password"
+                   class="form-control" placeholder="Ingrese su contraseña">
+            <button class="btn btn-outline-secondary" type="button" id="togglePwd" tabindex="-1">
+              <i class="bi bi-eye" id="eyeIcon"></i>
+            </button>
+          </div>
+        </div>
+
+        <div class="d-grid">
+          <button type="submit" class="btn btn-login btn-primary btn-lg">
+            <i class="bi bi-box-arrow-in-right me-2"></i>Iniciar Sesión
+          </button>
+        </div>
+      </form>
+
+      <hr class="my-3">
+      <div class="text-center">
+        <p class="text-muted small mb-2">Roles disponibles:</p>
+        <span class="role-badge bg-danger text-white me-1">Administrador</span>
+        <span class="role-badge bg-primary text-white me-1">Médico</span>
+        <span class="role-badge bg-secondary text-white">Visualizador</span>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('togglePwd').addEventListener('click', function () {
+      const pwd = document.getElementById('id_password');
+      const icon = document.getElementById('eyeIcon');
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        icon.className = 'bi bi-eye-slash';
+      } else {
+        pwd.type = 'password';
+        icon.className = 'bi bi-eye';
+      }
+    });
+  </script>
+</body>
+</html>

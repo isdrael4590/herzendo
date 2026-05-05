@@ -1,0 +1,445 @@
+{% extends 'pacientes/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h5 mb-0"><i class="bi bi-person-lines-fill me-2 text-primary"></i>{{ titulo }}</h2>
+  <a href="{% url 'lista' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Volver
+  </a>
+</div>
+
+{% if form.errors %}
+<div class="alert alert-danger py-2">
+  <i class="bi bi-exclamation-triangle-fill me-1"></i>
+  Corrija los errores marcados antes de guardar.
+</div>
+{% endif %}
+
+<form method="post" novalidate id="paciente-form">
+{% csrf_token %}
+
+<ul class="nav nav-tabs" id="formTabs" role="tablist">
+  <li class="nav-item"><button type="button" class="nav-link active" data-bs-toggle="tab" data-bs-target="#tab-gral">Datos Generales</button></li>
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-soma">Somatotropo</button></li>
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-gona">Gonadotropo</button></li>
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tiro">Tiroideo</button></li>
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-cort">Corticotropo</button></li>
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-prol">Prolactina</button></li>
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-sint">Síntomas</button></li>
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-tumo">Tumor</button></li>
+  <li class="nav-item"><button type="button" class="nav-link" data-bs-toggle="tab" data-bs-target="#tab-hist">Histología</button></li>
+</ul>
+
+<div class="tab-content border border-top-0 rounded-bottom p-3 bg-white">
+
+  <!-- ── DATOS GENERALES ─────────────────────────────────────── -->
+  <div class="tab-pane fade show active" id="tab-gral">
+    <div class="row g-2">
+      {% include 'pacientes/_field.html' with f=form.fecha_procedimiento col=3 %}
+      {% include 'pacientes/_field.html' with f=form.nombre col=5 %}
+      {% include 'pacientes/_field.html' with f=form.hcu col=2 %}
+      {% include 'pacientes/_field.html' with f=form.edad_diagnostico col=2 %}
+      {% include 'pacientes/_field.html' with f=form.sexo col=2 %}
+      {% include 'pacientes/_field.html' with f=form.procedimiento col=5 %}
+      {% include 'pacientes/_field.html' with f=form.cirujano col=5 %}
+      {% include 'pacientes/_field.html' with f=form.primera_cirugia col=3 %}
+      {% include 'pacientes/_field.html' with f=form.solo_biopsia col=3 %}
+      {% include 'pacientes/_field.html' with f=form.provincia_nacimiento col=4 %}
+      {% include 'pacientes/_field.html' with f=form.extranjero col=2 %}
+      {% include 'pacientes/_field.html' with f=form.pais_nacimiento col=4 %}
+      {% include 'pacientes/_field.html' with f=form.nivel_instruccion col=4 %}
+      {% include 'pacientes/_field.html' with f=form.etnia col=4 %}
+      {% include 'pacientes/_field.html' with f=form.antecedentes_fam col=4 %}
+      {% include 'pacientes/_field.html' with f=form.detalle_sindrome col=12 %}
+    </div>
+  </div>
+
+  <!-- ── SOMATOTROPO ────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-soma">
+    <h6 class="text-muted border-bottom pb-1 mb-2">Hormona de Crecimiento (GH)</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.gh col=3 %}
+      {% include 'pacientes/_field.html' with f=form.gh_ref_min col=3 %}
+      {% include 'pacientes/_field.html' with f=form.gh_ref_max col=3 %}
+      {% include 'pacientes/_field.html' with f=form.gh_interp col=3 %}
+    </div>
+    <h6 class="text-muted border-bottom pb-1 mb-2">IGF-1</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.igf1 col=3 %}
+      {% include 'pacientes/_field.html' with f=form.igf1_ref_min col=3 %}
+      {% include 'pacientes/_field.html' with f=form.igf1_ref_max col=3 %}
+      {% include 'pacientes/_field.html' with f=form.igf1_interp col=3 %}
+    </div>
+    <div class="row g-2">
+      {% include 'pacientes/_field.html' with f=form.igf1_index_elevado col=4 %}
+      {% include 'pacientes/_field.html' with f=form.acromegalia col=4 %}
+      {% include 'pacientes/_field.html' with f=form.tto_previo_octretide col=4 %}
+    </div>
+  </div>
+
+  <!-- ── GONADOTROPO ────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-gona">
+    <h6 class="text-muted border-bottom pb-1 mb-2">LH</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.lh col=3 %}
+      {% include 'pacientes/_field.html' with f=form.lh_ref_min col=3 %}
+      {% include 'pacientes/_field.html' with f=form.lh_ref_max col=3 %}
+      {% include 'pacientes/_field.html' with f=form.lh_interp col=3 %}
+    </div>
+    <h6 class="text-muted border-bottom pb-1 mb-2">FSH</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.fsh col=3 %}
+      {% include 'pacientes/_field.html' with f=form.fsh_ref_min col=3 %}
+      {% include 'pacientes/_field.html' with f=form.fsh_ref_max col=3 %}
+      {% include 'pacientes/_field.html' with f=form.fsh_interp col=3 %}
+    </div>
+    <h6 class="text-muted border-bottom pb-1 mb-2">Estradiol</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.estradiol col=3 %}
+      {% include 'pacientes/_field.html' with f=form.estradiol_ref_min col=3 %}
+      {% include 'pacientes/_field.html' with f=form.estradiol_ref_max col=3 %}
+      {% include 'pacientes/_field.html' with f=form.estradiol_interp col=3 %}
+    </div>
+    <h6 class="text-muted border-bottom pb-1 mb-2">Testosterona Total</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.testosterona col=3 %}
+      {% include 'pacientes/_field.html' with f=form.testosterona_ref_min col=3 %}
+      {% include 'pacientes/_field.html' with f=form.testosterona_ref_max col=3 %}
+      {% include 'pacientes/_field.html' with f=form.testosterona_interp col=3 %}
+    </div>
+    <div class="row g-2">
+      {% include 'pacientes/_field.html' with f=form.hipogonadismo_fem col=3 %}
+      {% include 'pacientes/_field.html' with f=form.hipogonadismo_masc col=3 %}
+      {% include 'pacientes/_field.html' with f=form.amenorrea col=3 %}
+      {% include 'pacientes/_field.html' with f=form.gonadotropinoma col=3 %}
+    </div>
+  </div>
+
+  <!-- ── TIROIDEO ───────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-tiro">
+    <h6 class="text-muted border-bottom pb-1 mb-2">TSH</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.tsh col=4 %}
+      {% include 'pacientes/_field.html' with f=form.tsh_ref_min col=4 %}
+      {% include 'pacientes/_field.html' with f=form.tsh_ref_max col=4 %}
+    </div>
+    <h6 class="text-muted border-bottom pb-1 mb-2">T4 Libre</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.t4l col=4 %}
+      {% include 'pacientes/_field.html' with f=form.t4l_ref_min col=4 %}
+      {% include 'pacientes/_field.html' with f=form.t4l_ref_max col=4 %}
+    </div>
+    <div class="row g-2">
+      {% include 'pacientes/_field.html' with f=form.hipotiroidismo_central col=6 %}
+      {% include 'pacientes/_field.html' with f=form.tirotropinoma col=6 %}
+    </div>
+  </div>
+
+  <!-- ── CORTICOTROPO ───────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-cort">
+    <h6 class="text-muted border-bottom pb-1 mb-2">Cortisol</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.cortisol col=3 %}
+      {% include 'pacientes/_field.html' with f=form.cortisol_ref_min col=3 %}
+      {% include 'pacientes/_field.html' with f=form.cortisol_ref_max col=3 %}
+      {% include 'pacientes/_field.html' with f=form.cortisol_interp col=3 %}
+      {% include 'pacientes/_field.html' with f=form.eje_corticotropo_suf col=6 %}
+      {% include 'pacientes/_field.html' with f=form.eje_corticotropo_ins col=6 %}
+    </div>
+    <h6 class="text-muted border-bottom pb-1 mb-2">ACTH Plasmática</h6>
+    <div class="row g-2 mb-3">
+      {% include 'pacientes/_field.html' with f=form.acth col=3 %}
+      {% include 'pacientes/_field.html' with f=form.acth_ref_min col=3 %}
+      {% include 'pacientes/_field.html' with f=form.acth_ref_max col=3 %}
+      {% include 'pacientes/_field.html' with f=form.acth_interp col=3 %}
+    </div>
+    <div class="row g-2">
+      {% include 'pacientes/_field.html' with f=form.cushing col=4 %}
+    </div>
+  </div>
+
+  <!-- ── PROLACTINA ─────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-prol">
+    <div class="row g-2">
+      {% include 'pacientes/_field.html' with f=form.prolactina col=3 %}
+      {% include 'pacientes/_field.html' with f=form.prolactina_ref_min col=3 %}
+      {% include 'pacientes/_field.html' with f=form.prolactina_ref_max col=3 %}
+      {% include 'pacientes/_field.html' with f=form.prolactina_interp col=3 %}
+      {% include 'pacientes/_field.html' with f=form.tto_previo_cabergolina col=4 %}
+    </div>
+  </div>
+
+  <!-- ── SÍNTOMAS ───────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-sint">
+    <div class="row g-2">
+      {% include 'pacientes/_field.html' with f=form.deficit_vasopresina col=4 %}
+      {% include 'pacientes/_field.html' with f=form.apoplejia col=4 %}
+      {% include 'pacientes/_field.html' with f=form.cefalea col=4 %}
+      {% include 'pacientes/_field.html' with f=form.alt_campo_visual col=4 %}
+      {% include 'pacientes/_field.html' with f=form.convulsiones col=4 %}
+      {% include 'pacientes/_field.html' with f=form.fistula_lcr col=4 %}
+      {% include 'pacientes/_field.html' with f=form.sind_seno_cavernoso col=4 %}
+    </div>
+  </div>
+
+  <!-- ── TUMOR ──────────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-tumo">
+    <div class="row g-2">
+      {% include 'pacientes/_field.html' with f=form.tamano_tumor col=3 %}
+      {% include 'pacientes/_field.html' with f=form.tamano_tumor_interp col=4 %}
+      {% include 'pacientes/_field.html' with f=form.invasion_seno_cav col=3 %}
+      {% include 'pacientes/_field.html' with f=form.knosp col=2 %}
+      {% include 'pacientes/_field.html' with f=form.tipo_histologico col=12 %}
+    </div>
+  </div>
+
+  <!-- ── HISTOLOGÍA ─────────────────────────────────────────── -->
+  <div class="tab-pane fade" id="tab-hist">
+    <div class="row g-2">
+      {% include 'pacientes/_field.html' with f=form.reticulina_distorsionada col=4 %}
+      {% include 'pacientes/_field.html' with f=form.hormonas_ihq col=8 %}
+      {% include 'pacientes/_field.html' with f=form.descripcion_ihq col=12 %}
+      {% include 'pacientes/_field.html' with f=form.ki67 col=4 %}
+      {% include 'pacientes/_field.html' with f=form.ki67_interp col=4 %}
+      {% include 'pacientes/_field.html' with f=form.observaciones col=12 %}
+    </div>
+  </div>
+
+</div><!-- /tab-content -->
+
+<div class="d-flex gap-2 mt-3 align-items-center">
+  <button type="submit" class="btn btn-primary">
+    <i class="bi bi-floppy-fill me-1"></i>Guardar
+  </button>
+  <a href="{% url 'lista' %}" class="btn btn-outline-secondary">
+    <i class="bi bi-x-lg me-1"></i>Cancelar
+  </a>
+  <span id="autosave-status" class="text-muted small ms-2"></span>
+</div>
+</form>
+
+<script>
+(function () {
+  const STORAGE_KEY = 'paciente_draft_{{ object.pk|default:"new" }}';
+  const form = document.getElementById('paciente-form');
+  let saveTimer;
+
+  // ── Restaurar borrador al cargar ──────────────────────────────
+  const saved = localStorage.getItem(STORAGE_KEY);
+  if (saved) {
+    try {
+      const data = JSON.parse(saved);
+      Object.entries(data).forEach(([name, value]) => {
+        const el = form.querySelector('[name="' + name + '"]');
+        if (el && el.type !== 'hidden') el.value = value;
+      });
+      document.getElementById('autosave-status').textContent = '(borrador restaurado)';
+    } catch(e) {}
+  }
+
+  // ── Guardar borrador al escribir ──────────────────────────────
+  function saveDraft() {
+    const data = {};
+    new FormData(form).forEach((val, key) => {
+      if (key !== 'csrfmiddlewaretoken') data[key] = val;
+    });
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+    const el = document.getElementById('autosave-status');
+    el.textContent = '✓ Borrador guardado';
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(() => { el.textContent = ''; }, 3000);
+  }
+
+  form.addEventListener('input', () => { clearTimeout(saveTimer); saveTimer = setTimeout(saveDraft, 800); });
+  form.addEventListener('change', saveDraft);
+
+  // ── Limpiar borrador al guardar con éxito ─────────────────────
+  form.addEventListener('submit', () => {
+    localStorage.removeItem(STORAGE_KEY);
+  });
+
+  // ── Al enviar con errores, abrir pestaña con error ────────────
+  document.addEventListener('DOMContentLoaded', function () {
+    const errorField = document.querySelector('.text-danger');
+    if (errorField) {
+      const pane = errorField.closest('.tab-pane');
+      if (pane) {
+        const tabBtn = document.querySelector('[data-bs-target="#' + pane.id + '"]');
+        if (tabBtn) tabBtn.click();
+      }
+    }
+  });
+
+  // ── Provincia → Extranjero y País de nacimiento ───────────────
+  const selProvincia = form.querySelector('[name="provincia_nacimiento"]');
+  const selExtranjero = form.querySelector('[name="extranjero"]');
+  const inputPais = form.querySelector('[name="pais_nacimiento"]');
+  if (selProvincia) {
+    function actualizarOrigen() {
+      if (selProvincia.value) {
+        if (selExtranjero) selExtranjero.value = 'no';
+        if (inputPais && !inputPais.value) inputPais.value = 'Ecuador';
+      } else {
+        if (selExtranjero && selExtranjero.value === 'no') selExtranjero.value = 'si';
+        if (inputPais && inputPais.value === 'Ecuador') inputPais.value = '';
+      }
+    }
+    selProvincia.addEventListener('change', actualizarOrigen);
+    // Ejecutar al cargar si ya hay valor
+    if (selProvincia.value) actualizarOrigen();
+  }
+
+  // ── Sexo → campos No Aplica ──────────────────────────────────
+  const selSexo = form.querySelector('[name="sexo"]');
+  const camposEstradiol    = ['estradiol','estradiol_ref_min','estradiol_ref_max','estradiol_interp'];
+  const camposTestosterona = ['testosterona','testosterona_ref_min','testosterona_ref_max','testosterona_interp'];
+  const selHipoFem  = form.querySelector('[name="hipogonadismo_fem"]');
+  const selHipoMasc = form.querySelector('[name="hipogonadismo_masc"]');
+
+  function setNA(names, disabled) {
+    names.forEach(function(n) {
+      const el = form.querySelector('[name="' + n + '"]');
+      if (!el) return;
+      el.disabled = disabled;
+      el.style.background = disabled ? '#e9ecef' : '';
+      el.style.opacity    = disabled ? '0.6'    : '';
+      if (disabled) { el.value = ''; }
+    });
+  }
+
+  function aplicarSexo() {
+    const s = selSexo ? selSexo.value : '';
+    if (s === 'M') {
+      setNA(camposEstradiol, true);
+      setNA(camposTestosterona, false);
+      if (selHipoFem)  { selHipoFem.value  = 'na'; selHipoFem.disabled  = true; selHipoFem.style.background  = '#e9ecef'; }
+      if (selHipoMasc) { selHipoMasc.disabled = false; selHipoMasc.style.background = ''; if (selHipoMasc.value === 'na') selHipoMasc.value = ''; }
+    } else if (s === 'F') {
+      setNA(camposTestosterona, true);
+      setNA(camposEstradiol, false);
+      if (selHipoMasc) { selHipoMasc.value = 'na'; selHipoMasc.disabled  = true; selHipoMasc.style.background = '#e9ecef'; }
+      if (selHipoFem)  { selHipoFem.disabled  = false; selHipoFem.style.background  = ''; if (selHipoFem.value  === 'na') selHipoFem.value  = ''; }
+    } else {
+      setNA(camposEstradiol,    false);
+      setNA(camposTestosterona, false);
+      if (selHipoFem)  { selHipoFem.disabled  = false; selHipoFem.style.background  = ''; }
+      if (selHipoMasc) { selHipoMasc.disabled = false; selHipoMasc.style.background = ''; }
+    }
+  }
+  if (selSexo) selSexo.addEventListener('change', aplicarSexo);
+  aplicarSexo();
+
+  // ── INDEX IGF-1 = igf1_ref_max / igf1 ────────────────────────
+  const inputIgf1    = form.querySelector('[name="igf1"]');
+  const inputIgf1Max = form.querySelector('[name="igf1_ref_max"]');
+  const inputIgf1Idx = form.querySelector('[name="igf1_index_elevado"]');
+  function calcularIndexIgf1() {
+    if (!inputIgf1 || !inputIgf1Max || !inputIgf1Idx) return;
+    const val = parseFloat(inputIgf1.value);
+    const max = parseFloat(inputIgf1Max.value);
+    if (!isNaN(val) && !isNaN(max) && val !== 0) {
+      inputIgf1Idx.value = (max / val).toFixed(3);
+    } else {
+      inputIgf1Idx.value = '';
+    }
+  }
+  if (inputIgf1)    inputIgf1.addEventListener('input', calcularIndexIgf1);
+  if (inputIgf1Max) inputIgf1Max.addEventListener('input', calcularIndexIgf1);
+  calcularIndexIgf1();
+
+  // ── Ki-67 → interpretación automática ────────────────────────
+  const inputKi67       = form.querySelector('[name="ki67"]');
+  const selectKi67Interp = form.querySelector('[name="ki67_interp"]');
+  if (inputKi67 && selectKi67Interp) {
+    inputKi67.addEventListener('input', function () {
+      const k = parseFloat(this.value);
+      if (isNaN(k) || this.value === '') {
+        selectKi67Interp.value = '';
+      } else if (k < 1) {
+        selectKi67Interp.value = 'muy_bajo';
+      } else if (k <= 3) {
+        selectKi67Interp.value = 'bajo';
+      } else if (k <= 10) {
+        selectKi67Interp.value = 'alto';
+      } else {
+        selectKi67Interp.value = 'muy_alto';
+      }
+    });
+  }
+
+  // ── Auto-calcular interpretación del tamaño del tumor ─────────
+  const inputTamano = form.querySelector('[name="tamano_tumor"]');
+  const selectInterp = form.querySelector('[name="tamano_tumor_interp"]');
+  if (inputTamano && selectInterp) {
+    inputTamano.addEventListener('input', function () {
+      const t = parseFloat(this.value);
+      if (isNaN(t) || this.value === '') {
+        selectInterp.value = '';
+      } else if (t < 10) {
+        selectInterp.value = 'microadenoma';
+      } else if (t <= 40) {
+        selectInterp.value = 'macroadenoma';
+      } else {
+        selectInterp.value = 'gigante';
+      }
+    });
+  }
+
+  // ── Helper genérico: valor vs rango → interp ─────────────────
+  function interpRango(inputVal, inputMin, inputMax, select) {
+    if (!select) return;
+    const vStr = inputVal ? inputVal.value : '';
+    if (vStr === '') { select.value = 'no_det'; return; }
+    const v = parseFloat(vStr);
+    const vmin = inputMin ? parseFloat(inputMin.value) : NaN;
+    const vmax = inputMax ? parseFloat(inputMax.value) : NaN;
+    if (!isNaN(v) && !isNaN(vmin) && !isNaN(vmax)) {
+      select.value = v < vmin ? 'bajo' : (v > vmax ? 'elevado' : 'normal');
+    }
+  }
+  function bindInterp(valName, minName, maxName, interpName) {
+    const iVal = form.querySelector('[name="' + valName + '"]');
+    const iMin = form.querySelector('[name="' + minName + '"]');
+    const iMax = form.querySelector('[name="' + maxName + '"]');
+    const sel  = form.querySelector('[name="' + interpName + '"]');
+    const fn = () => interpRango(iVal, iMin, iMax, sel);
+    if (iVal) iVal.addEventListener('input', fn);
+    if (iMin) iMin.addEventListener('input', fn);
+    if (iMax) iMax.addEventListener('input', fn);
+    fn();
+  }
+  // Prolactina usa PROLACT_INTERP (baja/elevada/no_dato)
+  (function () {
+    const iVal = form.querySelector('[name="prolactina"]');
+    const iMin = form.querySelector('[name="prolactina_ref_min"]');
+    const iMax = form.querySelector('[name="prolactina_ref_max"]');
+    const sel  = form.querySelector('[name="prolactina_interp"]');
+    function fn() {
+      if (!sel) return;
+      const vStr = iVal ? iVal.value : '';
+      if (vStr === '') { sel.value = 'no_dato'; return; }
+      const v = parseFloat(vStr);
+      const vmin = iMin ? parseFloat(iMin.value) : NaN;
+      const vmax = iMax ? parseFloat(iMax.value) : NaN;
+      if (!isNaN(v) && !isNaN(vmin) && !isNaN(vmax)) {
+        sel.value = v < vmin ? 'baja' : (v > vmax ? 'elevada' : 'normal');
+      }
+    }
+    if (iVal) iVal.addEventListener('input', fn);
+    if (iMin) iMin.addEventListener('input', fn);
+    if (iMax) iMax.addEventListener('input', fn);
+    fn();
+  })();
+
+  bindInterp('lh',          'lh_ref_min',          'lh_ref_max',          'lh_interp');
+  bindInterp('fsh',         'fsh_ref_min',          'fsh_ref_max',         'fsh_interp');
+  bindInterp('estradiol',   'estradiol_ref_min',    'estradiol_ref_max',   'estradiol_interp');
+  bindInterp('testosterona','testosterona_ref_min', 'testosterona_ref_max','testosterona_interp');
+
+  bindInterp('gh',      'gh_ref_min',      'gh_ref_max',      'gh_interp');
+  bindInterp('igf1',    'igf1_ref_min',    'igf1_ref_max',    'igf1_interp');
+  bindInterp('cortisol','cortisol_ref_min','cortisol_ref_max','cortisol_interp');
+  bindInterp('acth',    'acth_ref_min',    'acth_ref_max',    'acth_interp');
+})();
+</script>
+{% endblock %}

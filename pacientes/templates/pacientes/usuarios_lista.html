@@ -1,0 +1,82 @@
+{% extends 'pacientes/base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h5 mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Gestión de Personal</h2>
+  <a href="{% url 'usuario_crear' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-person-plus-fill me-1"></i>Nuevo Usuario
+  </a>
+</div>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if usuarios %}
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Usuario</th>
+            <th>Nombre completo</th>
+            <th>Correo</th>
+            <th>Rol</th>
+            <th>Estado</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for u in usuarios %}
+          <tr>
+            <td class="text-muted small">{{ forloop.counter }}</td>
+            <td class="fw-semibold">{{ u.username }}</td>
+            <td>{{ u.get_full_name|default:"—" }}</td>
+            <td class="small">{{ u.email|default:"—" }}</td>
+            <td>
+              {% if u.is_superuser %}
+                <span class="badge bg-dark">Superusuario</span>
+              {% else %}
+                {% for g in u.groups.all %}
+                  <span class="badge
+                    {% if g.name == 'administrador' %}bg-danger
+                    {% elif g.name == 'medico' %}bg-primary
+                    {% else %}bg-secondary{% endif %}">
+                    {{ g.name|capfirst }}
+                  </span>
+                {% empty %}
+                  <span class="badge bg-light text-muted">Sin rol</span>
+                {% endfor %}
+              {% endif %}
+            </td>
+            <td>
+              {% if u.is_active %}
+                <span class="badge bg-success">Activo</span>
+              {% else %}
+                <span class="badge bg-danger">Inactivo</span>
+              {% endif %}
+            </td>
+            <td class="text-center text-nowrap">
+              {% if not u.is_superuser %}
+              <a href="{% url 'usuario_editar' u.pk %}" class="btn btn-sm btn-outline-warning me-1" title="Editar">
+                <i class="bi bi-pencil-fill"></i>
+              </a>
+              <a href="{% url 'usuario_eliminar' u.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                <i class="bi bi-trash3-fill"></i>
+              </a>
+              {% else %}
+              <span class="text-muted small">—</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="text-muted small p-2 border-top">{{ usuarios|length }} usuario{{ usuarios|length|pluralize }}</div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-people display-4 d-block mb-2"></i>
+      No hay usuarios registrados.
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

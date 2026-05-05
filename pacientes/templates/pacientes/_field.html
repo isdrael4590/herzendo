@@ -1,0 +1,18 @@
+<div class="col-md-{{ col }}">
+  <label class="form-label form-label-sm fw-semibold mb-1">{{ f.label }}</label>
+  {% if f.field.widget.input_type == 'checkbox' and f.field.widget|stringformat:"s"|slice:":21" == "CheckboxSelectMultiple" %}
+    <div class="d-flex flex-wrap gap-3 mt-1">
+      {% for choice in f %}
+        <div class="form-check">
+          {{ choice.tag }}
+          <label class="form-check-label small" for="{{ choice.id_for_label }}">{{ choice.choice_label }}</label>
+        </div>
+      {% endfor %}
+    </div>
+  {% else %}
+    {{ f }}
+  {% endif %}
+  {% if f.errors %}
+    <div class="text-danger small">{{ f.errors|join:", " }}</div>
+  {% endif %}
+</div>

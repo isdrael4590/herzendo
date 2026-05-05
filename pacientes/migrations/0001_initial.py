@@ -1,0 +1,117 @@
+from django.db import migrations, models
+
+
+class Migration(migrations.Migration):
+
+    initial = True
+    dependencies = []
+
+    operations = [
+        migrations.CreateModel(
+            name='Paciente',
+            fields=[
+                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                # Generales
+                ('fecha_procedimiento', models.DateField(blank=True, null=True)),
+                ('nombre', models.CharField(max_length=150)),
+                ('hcu', models.CharField(blank=True, max_length=50, verbose_name='HCU')),
+                ('edad_diagnostico', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Edad al diagnóstico')),
+                ('sexo', models.CharField(blank=True, choices=[('', '—'), ('M', 'Masculino'), ('F', 'Femenino')], max_length=1)),
+                ('procedimiento', models.CharField(blank=True, max_length=200)),
+                ('cirujano', models.CharField(blank=True, max_length=150)),
+                ('primera_cirugia', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Primera cirugía')),
+                ('solo_biopsia', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30)),
+                ('provincia_nacimiento', models.CharField(blank=True, max_length=100)),
+                ('extranjero', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30)),
+                ('pais_nacimiento', models.CharField(blank=True, max_length=100, verbose_name='País de nacimiento')),
+                ('nivel_instruccion', models.CharField(blank=True, choices=[('', '—'), ('ninguna', 'Ninguna'), ('primaria', 'Primaria'), ('secundaria', 'Secundaria'), ('superior', 'Superior técnico/universitario'), ('postgrado', 'Posgrado')], max_length=30, verbose_name='Nivel de instrucción')),
+                ('etnia', models.CharField(blank=True, max_length=100)),
+                ('antecedentes_fam', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Antecedentes familiares tumores hipofisarios')),
+                ('detalle_sindrome', models.TextField(blank=True, verbose_name='Detalle del síndrome')),
+                # Somatotropo
+                ('gh', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='GH')),
+                ('gh_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='GH ref. mín')),
+                ('gh_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='GH ref. máx')),
+                ('gh_interp', models.CharField(blank=True, choices=[('', '—'), ('normal', 'Normal'), ('elevado', 'Elevado'), ('bajo', 'Bajo'), ('no_det', 'No determinado')], max_length=30, verbose_name='Interpretación GH')),
+                ('igf1', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='IGF-1')),
+                ('igf1_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='IGF-1 ref. mín')),
+                ('igf1_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='IGF-1 ref. máx')),
+                ('igf1_interp', models.CharField(blank=True, choices=[('', '—'), ('normal', 'Normal'), ('elevado', 'Elevado'), ('bajo', 'Bajo'), ('no_det', 'No determinado')], max_length=30, verbose_name='Interpretación IGF-1')),
+                ('igf1_index_elevado', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='INDEX IGF-1 elevada')),
+                ('acromegalia', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30)),
+                ('tto_previo_octretide', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Tto. previo octreótide')),
+                # Gonadotropo
+                ('lh', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='LH')),
+                ('lh_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='LH ref. mín')),
+                ('lh_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='LH ref. máx')),
+                ('lh_interp', models.CharField(blank=True, choices=[('', '—'), ('normal', 'Normal'), ('elevado', 'Elevado'), ('bajo', 'Bajo'), ('no_det', 'No determinado')], max_length=30, verbose_name='Interpretación LH')),
+                ('fsh', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='FSH')),
+                ('fsh_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='FSH ref. mín')),
+                ('fsh_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='FSH ref. máx')),
+                ('fsh_interp', models.CharField(blank=True, choices=[('', '—'), ('normal', 'Normal'), ('elevado', 'Elevado'), ('bajo', 'Bajo'), ('no_det', 'No determinado')], max_length=30, verbose_name='Interpretación FSH')),
+                ('estradiol', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True)),
+                ('estradiol_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Estradiol ref. mín')),
+                ('estradiol_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Estradiol ref. máx')),
+                ('estradiol_interp', models.CharField(blank=True, choices=[('', '—'), ('normal', 'Normal'), ('elevado', 'Elevado'), ('bajo', 'Bajo'), ('no_det', 'No determinado')], max_length=30, verbose_name='Interpretación estradiol')),
+                ('testosterona', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Testosterona total')),
+                ('testosterona_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Testosterona ref. mín')),
+                ('testosterona_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Testosterona ref. máx')),
+                ('hipogonadismo_fem', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Hipogonadismo femenino')),
+                ('hipogonadismo_masc', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Hipogonadismo masculino')),
+                ('amenorrea', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30)),
+                ('gonadotropinoma', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Gonadotropinoma funcionante')),
+                # Tiroideo
+                ('tsh', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='TSH')),
+                ('tsh_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='TSH ref. mín')),
+                ('tsh_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='TSH ref. máx')),
+                ('t4l', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='T4L')),
+                ('t4l_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='T4L ref. mín')),
+                ('t4l_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='T4L ref. máx')),
+                ('hipotiroidismo_central', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Hipotiroidismo central')),
+                ('tirotropinoma', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30)),
+                # Corticotropo
+                ('cortisol', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True)),
+                ('cortisol_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Cortisol ref. mín')),
+                ('cortisol_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Cortisol ref. máx')),
+                ('eje_corticotropo_suf', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Eje corticotropo suficiente')),
+                ('eje_corticotropo_ins', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Eje corticotropo insuficiente')),
+                ('acth', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='ACTH plasmática')),
+                ('acth_ref_min', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='ACTH ref. mín')),
+                ('acth_ref_max', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='ACTH ref. máx')),
+                ('acth_interp', models.CharField(blank=True, choices=[('', '—'), ('normal', 'Normal'), ('elevado', 'Elevado'), ('bajo', 'Bajo'), ('no_det', 'No determinado')], max_length=30, verbose_name='Interpretación ACTH')),
+                ('cushing', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Síndrome de Cushing')),
+                # Prolactina
+                ('prolactina', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Prolactina sérica')),
+                ('prolactina_interp', models.CharField(blank=True, choices=[('', '—'), ('normal', 'Normal'), ('leve', 'Hiperprolactinemia leve'), ('moderada', 'Hiperprolactinemia moderada'), ('severa', 'Hiperprolactinemia severa')], max_length=30, verbose_name='Interpretación prolactina')),
+                ('tto_previo_cabergolina', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Tto. previo cabergolina')),
+                # Síntomas
+                ('deficit_vasopresina', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Déficit arginina vasopresina')),
+                ('apoplejia', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Apoplejía hipofisaria')),
+                ('cefalea', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30)),
+                ('alt_campo_visual', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Alteración del campo visual')),
+                ('convulsiones', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30)),
+                ('fistula_lcr', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Fístula de LCR')),
+                ('sind_seno_cavernoso', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Síndrome del seno cavernoso')),
+                # Tumor
+                ('tamano_tumor', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Tamaño del tumor (mm)')),
+                ('tamano_tumor_interp', models.CharField(blank=True, choices=[('', '—'), ('microadenoma', 'Microadenoma (< 10 mm)'), ('macroadenoma', 'Macroadenoma (≥ 10 mm)'), ('gigante', 'Gigante (≥ 40 mm)')], max_length=30, verbose_name='Interpretación tamaño tumor')),
+                ('invasion_seno_cav', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Invasión del seno cavernoso')),
+                ('knosp', models.CharField(blank=True, choices=[('', '—'), ('0', '0'), ('1', '1'), ('2', '2'), ('3', '3'), ('4', '4')], max_length=5, verbose_name='KNOSP')),
+                ('tipo_histologico', models.CharField(blank=True, max_length=200, verbose_name='Tipo histológico del tumor')),
+                # Histología
+                ('reticulina_distorsionada', models.CharField(blank=True, choices=[('', '—'), ('si', 'Sí'), ('no', 'No')], max_length=30, verbose_name='Fibras de reticulina distorsionadas')),
+                ('hormonas_ihq', models.CharField(blank=True, max_length=200, verbose_name='Hormonas IHQ')),
+                ('descripcion_ihq', models.TextField(blank=True, verbose_name='Descripción hormonas IHQ')),
+                ('ki67', models.DecimalField(blank=True, decimal_places=3, max_digits=10, null=True, verbose_name='Ki-67 (%)')),
+                ('ki67_interp', models.CharField(blank=True, choices=[('', '—'), ('bajo', 'Bajo (< 3 %)'), ('alto', 'Alto (≥ 3 %)')], max_length=10, verbose_name='Interpretación Ki-67')),
+                ('observaciones', models.TextField(blank=True)),
+                ('creado', models.DateTimeField(auto_now_add=True)),
+                ('actualizado', models.DateTimeField(auto_now=True)),
+            ],
+            options={
+                'verbose_name': 'Paciente',
+                'verbose_name_plural': 'Pacientes',
+                'ordering': ['-fecha_procedimiento', 'nombre'],
+            },
+        ),
+    ]

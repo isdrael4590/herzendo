@@ -1,0 +1,23 @@
+<div class="field-row">
+  <span class="field-label">{{ label }}</span>
+  <span class="field-value{% if not value %} empty{% endif %}">
+    {% if not value %}
+      —
+    {% elif badge %}
+      {% if value == 'si' %}
+        <span class="interp-badge badge-si">SÍ</span>
+      {% elif value == 'no' %}
+        <span class="interp-badge badge-no">NO</span>
+      {% elif value == 'na' %}
+        <span class="interp-badge badge-no_det">N/A</span>
+      {% else %}
+        <span class="interp-badge badge-no_det">{{ value|upper }}</span>
+      {% endif %}
+    {% else %}
+      {{ value }}{% if unit %} <span class="text-muted" style="font-size:10px;">{{ unit }}</span>{% endif %}
+      {% if interp %}
+        &nbsp;<span class="interp-badge badge-{{ interp }}">{{ interp|upper }}</span>
+      {% endif %}
+    {% endif %}
+  </span>
+</div>

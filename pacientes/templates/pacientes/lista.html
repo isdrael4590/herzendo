@@ -1,0 +1,96 @@
+{% extends 'pacientes/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h4 mb-0"><i class="bi bi-people-fill me-2 text-primary"></i>Registro de Pacientes Hipofisarios</h2>
+  {% if puede_crear %}
+  <a href="{% url 'crear' %}" class="btn btn-primary btn-sm">
+    <i class="bi bi-person-plus-fill me-1"></i>Nuevo Registro
+  </a>
+  {% endif %}
+</div>
+
+<form method="get" class="mb-3">
+  <div class="input-group input-group-sm">
+    <input type="text" name="q" value="{{ q }}" class="form-control"
+           placeholder="Buscar por nombre, HCU, cirujano...">
+    <button class="btn btn-outline-secondary" type="submit"><i class="bi bi-search"></i></button>
+    {% if q %}<a href="{% url 'lista' %}" class="btn btn-outline-danger"><i class="bi bi-x-lg"></i></a>{% endif %}
+  </div>
+</form>
+
+<div class="card">
+  <div class="card-body p-0">
+    {% if pacientes %}
+    <div class="table-responsive">
+      <table class="table table-sm table-hover mb-0">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>Fecha Proc.</th>
+            <th>Nombre</th>
+            <th>HCU</th>
+            <th>Edad Dx</th>
+            <th>Sexo</th>
+            <th>Procedimiento</th>
+            <th>Cirujano</th>
+            <th>Acromegalia</th>
+            <th>Cushing</th>
+            <th>Tumor</th>
+            <th class="text-center">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in pacientes %}
+          <tr>
+            <td class="text-muted small">{{ forloop.counter }}</td>
+            <td class="small">{{ p.fecha_procedimiento|date:"d/m/Y"|default:"—" }}</td>
+            <td class="fw-semibold">{{ p.nombre }}</td>
+            <td class="small">{{ p.hcu|default:"—" }}</td>
+            <td class="small">{{ p.edad_diagnostico|default:"—" }}</td>
+            <td class="small">{{ p.get_sexo_display|default:"—" }}</td>
+            <td class="small">{{ p.procedimiento|default:"—"|truncatechars:30 }}</td>
+            <td class="small">{{ p.cirujano|default:"—" }}</td>
+            <td class="small text-center">
+              {% if p.acromegalia == 'si' %}<span class="badge bg-warning text-dark">Sí</span>
+              {% elif p.acromegalia == 'no' %}<span class="badge bg-secondary">No</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="small text-center">
+              {% if p.cushing == 'si' %}<span class="badge bg-danger">Sí</span>
+              {% elif p.cushing == 'no' %}<span class="badge bg-secondary">No</span>
+              {% else %}—{% endif %}
+            </td>
+            <td class="small">{{ p.tamano_tumor_interp|default:"—"|capfirst }}</td>
+            <td class="text-center text-nowrap">
+              <a href="{% url 'imprimir' p.pk %}" class="btn btn-sm btn-outline-secondary me-1" title="Imprimir ficha" target="_blank">
+                <i class="bi bi-printer-fill"></i>
+              </a>
+              {% if puede_editar %}
+              <a href="{% url 'editar' p.pk %}" class="btn btn-sm btn-outline-warning me-1" title="Editar">
+                <i class="bi bi-pencil-fill"></i>
+              </a>
+              {% endif %}
+              {% if puede_eliminar %}
+              <a href="{% url 'eliminar' p.pk %}" class="btn btn-sm btn-outline-danger" title="Eliminar">
+                <i class="bi bi-trash3-fill"></i>
+              </a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <div class="text-muted small p-2 border-top">
+      {{ pacientes|length }} registro{{ pacientes|length|pluralize }} encontrado{{ pacientes|length|pluralize }}
+    </div>
+    {% else %}
+    <div class="text-center text-muted py-5">
+      <i class="bi bi-person-x display-4 d-block mb-2"></i>
+      {% if q %}No se encontraron registros con "{{ q }}".{% else %}No hay registros aún.{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

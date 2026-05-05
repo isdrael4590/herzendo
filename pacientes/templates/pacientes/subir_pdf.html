@@ -1,0 +1,260 @@
+{% extends 'pacientes/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h5 mb-0"><i class="bi bi-file-earmark-pdf-fill me-2 text-danger"></i>Cargar historial desde PDF</h2>
+  <a href="{% url 'lista' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Volver
+  </a>
+</div>
+
+<!-- ── PASO 1: Subir PDF ─────────────────────────────────────── -->
+<div class="card mb-4">
+  <div class="card-header bg-primary text-white">
+    <strong>Paso 1 —</strong> Seleccione el archivo PDF del historial
+  </div>
+  <div class="card-body">
+    <div id="drop-zone"
+         class="border border-2 rounded p-5 text-center text-muted"
+         style="border-style:dashed!important;cursor:pointer;">
+      <i class="bi bi-cloud-upload display-4 d-block mb-2 text-primary"></i>
+      <p class="mb-1 fw-semibold">Arrastre el PDF aquí o haga clic para seleccionar</p>
+      <p class="small mb-3">Máximo 50 MB · Solo archivos PDF</p>
+      <input type="file" id="pdf-input" accept=".pdf" class="d-none">
+      <button type="button" class="btn btn-outline-primary btn-sm"
+              onclick="document.getElementById('pdf-input').click()">
+        <i class="bi bi-folder2-open me-1"></i>Examinar archivos
+      </button>
+    </div>
+
+    <div id="archivo-seleccionado" class="d-none mt-3 alert alert-info py-2 d-flex align-items-center gap-2">
+      <i class="bi bi-file-earmark-pdf-fill text-danger fs-4"></i>
+      <span id="archivo-nombre" class="fw-semibold flex-grow-1"></span>
+      <span id="archivo-tamano" class="text-muted small"></span>
+      <button type="button" class="btn btn-sm btn-outline-danger" onclick="limpiarArchivo()">
+        <i class="bi bi-x-lg"></i>
+      </button>
+    </div>
+
+    <div class="mt-3">
+      <button type="button" class="btn btn-primary" id="btn-procesar" disabled onclick="procesarPDF()">
+        <i class="bi bi-cpu-fill me-1"></i>Extraer datos del PDF
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Progreso -->
+<div id="progreso" class="d-none mb-4">
+  <div class="d-flex align-items-center gap-2 text-primary">
+    <div class="spinner-border spinner-border-sm"></div>
+    <span>Leyendo y extrayendo datos del PDF...</span>
+  </div>
+</div>
+
+<!-- Error -->
+<div id="error-box" class="d-none alert alert-danger"></div>
+
+<!-- ── PASO 2: Datos extraídos ───────────────────────────────── -->
+<div id="resultado" class="d-none">
+  <div class="card mb-4">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+      <strong><i class="bi bi-check-circle-fill me-1"></i>Paso 2 — Datos extraídos del PDF</strong>
+      <div class="d-flex gap-2 align-items-center">
+        <span id="gemini-status"></span>
+        <span id="resumen-extraidos" class="badge bg-white text-success fw-bold"></span>
+      </div>
+    </div>
+    <div class="card-body">
+
+      <div class="alert alert-warning py-2 small mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+        Revise los valores encontrados. La extracción automática puede no ser exacta.
+      </div>
+
+      <!-- Tabla de campos extraídos -->
+      <div class="table-responsive mb-3">
+        <table class="table table-sm table-bordered mb-0" id="tabla-campos">
+          <thead class="table-light">
+            <tr><th>Campo</th><th>Valor extraído <small class="fw-normal text-muted">(editable)</small></th><th class="text-center" style="width:60px">Pág.</th><th class="text-center" style="width:70px">¿Incluir?</th></tr>
+          </thead>
+          <tbody id="tbody-campos"></tbody>
+        </table>
+      </div>
+
+      <!-- Texto crudo colapsable -->
+      <button type="button" class="btn btn-outline-secondary btn-sm mb-2"
+              data-bs-toggle="collapse" data-bs-target="#texto-crudo">
+        <i class="bi bi-file-text me-1"></i>Ver texto extraído del PDF
+      </button>
+      <div class="collapse" id="texto-crudo">
+        <pre id="texto-crudo-contenido"
+             class="bg-light border rounded p-3 small"
+             style="max-height:250px;overflow-y:auto;white-space:pre-wrap;"></pre>
+      </div>
+    </div>
+    <div class="card-footer d-flex gap-2">
+      <button type="button" class="btn btn-success" onclick="irAlFormulario()">
+        <i class="bi bi-pencil-square me-1"></i>Abrir formulario con estos datos
+      </button>
+      <button type="button" class="btn btn-outline-secondary" onclick="irAlFormularioVacio()">
+        <i class="bi bi-file-earmark-plus me-1"></i>Abrir formulario vacío
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let archivoSeleccionado = null;
+let datosExtraidos = {};
+let paginasExtraidas = {};
+
+const ETIQUETAS = {
+  nombre:'Nombre', hcu:'HCU', edad_diagnostico:'Edad Dx',
+  sexo:'Sexo', cirujano:'Cirujano', procedimiento:'Procedimiento',
+  pais_nacimiento:'País de nacimiento',
+  gh:'GH', igf1:'IGF-1', acromegalia:'Acromegalia', tto_previo_octretide:'Tto. octreótide',
+  lh:'LH', fsh:'FSH', estradiol:'Estradiol', testosterona:'Testosterona total',
+  hipogonadismo_fem:'Hipogonadismo femenino', hipogonadismo_masc:'Hipogonadismo masculino',
+  amenorrea:'Amenorrea', gonadotropinoma:'Gonadotropinoma',
+  tsh:'TSH', t4l:'T4L', hipotiroidismo_central:'Hipotiroidismo central', tirotropinoma:'Tirotropinoma',
+  cortisol:'Cortisol', acth:'ACTH', cushing:'Síndrome de Cushing',
+  prolactina:'Prolactina', tto_previo_cabergolina:'Tto. cabergolina',
+  deficit_vasopresina:'Déficit vasopresina', apoplejia:'Apoplejía',
+  cefalea:'Cefalea', alt_campo_visual:'Alt. campo visual',
+  convulsiones:'Convulsiones', fistula_lcr:'Fístula LCR', sind_seno_cavernoso:'Seno cavernoso',
+  tamano_tumor:'Tamaño tumor (mm)', tamano_tumor_interp:'Interp. tumor',
+  invasion_seno_cav:'Invasión seno cav.', knosp:'KNOSP',
+  tipo_histologico:'Tipo histológico', ki67:'Ki-67 (%)',
+  hormonas_ihq:'Hormonas IHQ', descripcion_ihq:'Desc. IHQ',
+};
+
+// ── Drag & Drop ───────────────────────────────────────────────
+const dropZone = document.getElementById('drop-zone');
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('bg-light'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('bg-light'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('bg-light'); if(e.dataTransfer.files[0]) setArchivo(e.dataTransfer.files[0]); });
+dropZone.addEventListener('click', () => document.getElementById('pdf-input').click());
+document.getElementById('pdf-input').addEventListener('change', e => { if(e.target.files[0]) setArchivo(e.target.files[0]); });
+
+function setArchivo(f) {
+  if (!f.name.toLowerCase().endsWith('.pdf')) { mostrarError('Solo se aceptan archivos PDF.'); return; }
+  archivoSeleccionado = f;
+  document.getElementById('archivo-nombre').textContent = f.name;
+  document.getElementById('archivo-tamano').textContent = (f.size/1024).toFixed(0)+' KB';
+  document.getElementById('archivo-seleccionado').classList.remove('d-none');
+  document.getElementById('btn-procesar').disabled = false;
+  ocultarError();
+}
+
+function limpiarArchivo() {
+  archivoSeleccionado = null;
+  document.getElementById('pdf-input').value = '';
+  document.getElementById('archivo-seleccionado').classList.add('d-none');
+  document.getElementById('btn-procesar').disabled = true;
+  document.getElementById('resultado').classList.add('d-none');
+}
+
+// ── Procesar PDF ──────────────────────────────────────────────
+async function procesarPDF() {
+  if (!archivoSeleccionado) return;
+  document.getElementById('progreso').classList.remove('d-none');
+  document.getElementById('btn-procesar').disabled = true;
+  document.getElementById('resultado').classList.add('d-none');
+  ocultarError();
+
+  const fd = new FormData();
+  fd.append('pdf', archivoSeleccionado);
+  fd.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+
+  try {
+    const resp = await fetch('{% url "procesar_pdf" %}', { method:'POST', body:fd });
+    const data = await resp.json();
+    if (data.error) { mostrarError(data.error); return; }
+    datosExtraidos  = data.campos  || {};
+    paginasExtraidas = data.paginas || {};
+    mostrarResultado(data);
+  } catch(e) {
+    mostrarError('Error de conexión al procesar el PDF.');
+  } finally {
+    document.getElementById('progreso').classList.add('d-none');
+    document.getElementById('btn-procesar').disabled = false;
+  }
+}
+
+function mostrarResultado(data) {
+  const campos = data.campos || {};
+  const total = Object.keys(campos).length;
+  document.getElementById('resumen-extraidos').textContent = total + ' campo'+(total!==1?'s':'')+' encontrado'+(total!==1?'s':'');
+
+  // Badge de estado Gemini
+  const gs = data.gemini_status || '';
+  const gEl = document.getElementById('gemini-status');
+  if (gs.startsWith('ok:')) {
+    const modelo = gs.replace('ok:', '');
+    gEl.innerHTML = `<span class="badge bg-white text-success"><i class="bi bi-stars me-1"></i>Gemini activo · ${modelo}</span>`;
+  } else if (gs === 'sin_key') {
+    gEl.innerHTML = `<span class="badge bg-warning text-dark"><i class="bi bi-exclamation-triangle me-1"></i>Sin API key — solo regex</span>`;
+  } else {
+    const detalle = gs.replace('error:', '');
+    gEl.innerHTML = `<span class="badge bg-danger" title="${detalle}"><i class="bi bi-x-circle me-1"></i>Gemini falló — solo regex</span>`;
+    console.error('Gemini error:', detalle);
+  }
+  document.getElementById('texto-crudo-contenido').textContent = data.texto_crudo || '(sin texto)';
+
+  const tbody = document.getElementById('tbody-campos');
+  tbody.innerHTML = '';
+  if (total === 0) {
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-muted">No se identificaron campos. Complete manualmente.</td></tr>';
+  } else {
+    const paginas = data.paginas || {};
+    Object.entries(campos).forEach(([k, v]) => {
+      const label = ETIQUETAS[k] || k;
+      const vEsc  = String(v).replace(/"/g, '&quot;');
+      const pag   = paginas[k];
+      const pagBadge = pag
+        ? `<span class="badge bg-secondary">${pag}</span>`
+        : `<span class="text-muted small">—</span>`;
+      tbody.innerHTML += `<tr>
+        <td class="small fw-semibold">${label}</td>
+        <td class="small">
+          <input type="text" class="form-control form-control-sm campo-valor"
+                 name="${k}" value="${vEsc}" style="font-family:monospace;font-size:.8rem;">
+        </td>
+        <td class="text-center">${pagBadge}</td>
+        <td class="text-center">
+          <input type="checkbox" class="form-check-input campo-check" checked>
+        </td>
+      </tr>`;
+    });
+  }
+
+  document.getElementById('resultado').classList.remove('d-none');
+  document.getElementById('resultado').scrollIntoView({ behavior:'smooth' });
+}
+
+// ── Ir al formulario con datos seleccionados ──────────────────
+function irAlFormulario() {
+  const params = new URLSearchParams();
+  document.querySelectorAll('#tbody-campos tr').forEach(tr => {
+    const cb  = tr.querySelector('.campo-check');
+    const inp = tr.querySelector('.campo-valor');
+    if (cb && inp && cb.checked && inp.value.trim()) {
+      params.append(inp.name, inp.value.trim());
+    }
+  });
+  window.location.href = '{% url "crear" %}?' + params.toString();
+}
+
+function irAlFormularioVacio() {
+  window.location.href = '{% url "crear" %}';
+}
+
+function mostrarError(msg) {
+  const el = document.getElementById('error-box');
+  el.innerHTML = '<i class="bi bi-exclamation-triangle-fill me-1"></i>' + msg;
+  el.classList.remove('d-none');
+}
+function ocultarError() { document.getElementById('error-box').classList.add('d-none'); }
+</script>
+{% endblock %}

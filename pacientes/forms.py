@@ -24,13 +24,14 @@ class PacienteForm(forms.ModelForm):
 
     class Meta:
         model = Paciente
-        exclude = ['creado', 'actualizado']
+        exclude = ['creado', 'actualizado', 'estado']
         widgets = {
             # Generales
-            'fecha_procedimiento': forms.DateInput(attrs=_dat),
             'nombre':              forms.TextInput(attrs=_txt),
             'hcu':                 forms.TextInput(attrs=_txt),
+            'fecha_nacimiento':    forms.DateInput(attrs=_dat),
             'edad_diagnostico':    forms.NumberInput(attrs=_num),
+            'fecha_procedimiento': forms.DateInput(attrs=_dat),
             'sexo':                forms.Select(attrs=_sel),
             'procedimiento':       forms.TextInput(attrs=_txt),
             'cirujano':            forms.TextInput(attrs=_txt),

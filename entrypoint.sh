@@ -19,4 +19,6 @@ EOF
 
 python manage.py migrate --noinput
 python manage.py crear_grupos
-exec gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 180 --graceful-timeout 30 herzendo.wsgi:application
+exec gunicorn --bind 0.0.0.0:8000 --workers 2 --timeout 180 --graceful-timeout 30 \
+  --reload --reload-extra-file /app/pacientes/templates --reload-extra-file /app/referencias/templates \
+  herzendo.wsgi:application

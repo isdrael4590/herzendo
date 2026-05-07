@@ -9,6 +9,8 @@ urlpatterns = [
     path('imprimir/<int:pk>/', views.imprimir, name='imprimir'),
     path('subir-pdf/', views.subir_pdf, name='subir_pdf'),
     path('subir-pdf/procesar/', views.procesar_pdf, name='procesar_pdf'),
+    path('estado/<int:pk>/',   views.cambiar_estado,  name='cambiar_estado'),
+    path('exportar/excel/',    views.exportar_excel,  name='exportar_excel'),
     # Gestión de personal
     path('personal/', views.usuarios_lista, name='usuarios_lista'),
     path('personal/nuevo/', views.usuario_crear, name='usuario_crear'),

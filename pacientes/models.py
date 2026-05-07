@@ -100,11 +100,12 @@ def _c(choices, **kw):
 
 class Paciente(models.Model):
     # ── Datos Generales ──────────────────────────────────────────────────────
-    fecha_procedimiento = models.DateField(null=True, blank=True)
     nombre              = models.CharField(max_length=150)
     hcu                 = models.CharField('HCU', max_length=50, blank=True)
+    fecha_nacimiento    = models.DateField('Fecha de nacimiento', null=True, blank=True)
     edad_diagnostico    = models.DecimalField('Edad al diagnóstico', **_d())
     sexo                = models.CharField(max_length=1, choices=SEXO, blank=True)
+    fecha_procedimiento = models.DateField('Fecha de procedimiento', null=True, blank=True)
     procedimiento       = models.CharField(max_length=200, blank=True)
     cirujano            = models.CharField(max_length=150, blank=True)
     primera_cirugia     = models.CharField('Primera cirugía', **_c(SI_NO))
@@ -206,6 +207,10 @@ class Paciente(models.Model):
     ki67                = models.DecimalField('Ki-67 (%)', **_d())
     ki67_interp         = models.CharField('Interpretación Ki-67', max_length=10, choices=KI67_INTERP, blank=True)
     observaciones       = models.TextField(blank=True)
+
+    ESTADO_CHOICES = [('pendiente', 'Pendiente'), ('completado', 'Completado')]
+    estado              = models.CharField(max_length=15, choices=ESTADO_CHOICES,
+                            default='pendiente', db_index=True)
 
     creado              = models.DateTimeField(auto_now_add=True)
     actualizado         = models.DateTimeField(auto_now=True)

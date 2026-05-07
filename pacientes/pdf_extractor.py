@@ -18,18 +18,19 @@ import io
 # ── Mapa hormonas → campos del modelo ────────────────────────────────────────
 # (patrón_nombre, campo_valor)
 MAPA_HORMONAS = [
-    (r'GH\b|Hormona.{0,8}Crec',   'gh'),
-    (r'IGF.?1|Somatomedina',       'igf1'),
-    (r'\bLH\b|Luteinizante',       'lh'),
-    (r'\bFSH\b|Folículo|Foliculo', 'fsh'),
-    (r'Estradiol|E2\b',            'estradiol'),
-    (r'Testosterona',               'testosterona'),
-    (r'\bTSH\b|Tirotropina',       'tsh'),
-    (r'T4.{0,5}(libre|L\b|Free)',  't4l'),
-    (r'Cortisol',                   'cortisol'),
-    (r'\bACTH\b|Corticotrop',      'acth'),
-    (r'Prolactina|PRL\b',          'prolactina'),
-    (r'Ki.?67',                     'ki67'),
+    (r'GH\b|Hormona.{0,8}Crec',                            'gh'),
+    (r'IGF.?1|Somatomedina',                               'igf1'),
+    (r'\bLH\b|Luteinizante',                               'lh'),
+    (r'\bFSH\b|Fol[ií]culo\s+Estimulante',               'fsh'),
+    # Estradiol: sin E2\b (demasiados falsos positivos con "E2" en otros contextos)
+    (r'\bEstradiol\b',                                     'estradiol'),
+    (r'Testosterona',                                      'testosterona'),
+    (r'\bTSH\b|Tirotropina',                              'tsh'),
+    (r'\bFT4\b|T4.{0,6}(?:libre|L\b|Free)|Tiroxina\s+Libre', 't4l'),
+    (r'Cortisol',                                          'cortisol'),
+    (r'\bACTH\b|Corticotrop',                             'acth'),
+    (r'Prolactina|PRL\b',                                 'prolactina'),
+    (r'Ki.?67',                                            'ki67'),
 ]
 
 # ── Palabras clave que indican páginas con datos clínicos ─────────────────────
@@ -255,12 +256,29 @@ def campos_de_texto(texto: str) -> dict:
             r')[:\s#\.]*(\d{4,})',
             texto)
     d['hcu'] = _hcu_raw if _hcu_raw else None
+
+    # Edad: exige al menos 2 dígitos o "años" para evitar falsos positivos
     d['edad_diagnostico'] = _num_texto(
-        r'(?:Edad al diagn[oó]stico|Edad)[:\s]+(\d+(?:[.,]\d+)?)\s*(?:años|a[ñn]os|a\.)?', texto)
-    d['cirujano'] = _buscar(
-        r'(?:Cirujano|Operado por|M[eé]dico tratante|Dr\.?)[:\s]+([A-ZÁÉÍÓÚÑ][^\n]{4,60})', texto)
+        r'(?:Edad al diagn[oó]stico|Edad\s+Dx)[:\s]+(\d{2,3}(?:[.,]\d+)?)\s*(?:años|a[ñn]os)?', texto)
+    if not d['edad_diagnostico']:
+        d['edad_diagnostico'] = _num_texto(
+            r'(?:Edad)[:\s]+(\d{2,3})\s*(?:años|a[ñn]os)', texto)
+
+    _cir_raw = _buscar(
+        r'(?:Cirujano(?:\s+(?:principal|responsable|de\s+guardia))?'
+        r'|Operado\s+por'
+        r'|M[eé]dico\s+(?:tratante|responsable|cirujano)'
+        r'|Operador(?:es)?'
+        r'|Responsable\s+(?:de\s+)?cirug[ií]a'
+        r')[:\s]+(?:Dr[a]?\.?\s+)?([A-ZÁÉÍÓÚÑ][^\n]{2,80})',
+        texto)
+    if _cir_raw:
+        _n = re.sub(r'^(?:DR[A]?\.?\s+)', '', _cir_raw.strip(), flags=re.I)
+        _n = re.sub(r'\s+[A-Z]{1,2}\s*$', '', _n.strip())  # quita iniciales al final ej. "MT"
+        _n = _n.title().strip()
+        d['cirujano'] = 'Dr. ' + _n if _n else _cir_raw.strip()
     d['procedimiento'] = _buscar(
-        r'(?:Procedimiento|Intervenci[oó]n quirúrgica?)[:\s]+([^\n]{5,150})', texto)
+        r'(?:PROCEDIMIENTO|Procedimiento|Intervenci[oó]n quirúrgica?)\s*:[:\s]*([^\n]{5,200})', texto)
     d['tipo_histologico'] = _buscar(
         r'(?:Tipo histol[oó]gico|Histolog[ií]a|Diagnóstico histol)[:\s]+([^\n]{3,120})', texto)
     d['hormonas_ihq'] = _buscar(
@@ -277,18 +295,41 @@ def campos_de_texto(texto: str) -> dict:
     d['pais_nacimiento'] = _buscar(
         r'(?:Pa[ií]s de nacimiento|Nacionalidad)[:\s]+([^\n]{2,60})', texto)
 
-    # ── Fecha del procedimiento ───────────────────────────────────────────────
-    if not d.get('fecha_procedimiento'):
-        fecha_raw = _buscar(
-            r'Fecha\s*(?:Nac[i.]?|Nacimiento|procedimiento|cirug[ií]a)?[:\s]+(\d{2}/\d{2}/\d{4}|\d{4}-\d{2}-\d{2})',
-            texto)
-        if fecha_raw:
-            import re as _re
-            m = _re.match(r'(\d{2})/(\d{2})/(\d{4})', fecha_raw)
-            if m:
-                d['fecha_procedimiento'] = f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
-            else:
-                d['fecha_procedimiento'] = fecha_raw
+    # ── Fechas ────────────────────────────────────────────────────────────────
+    def _parsear_fecha(raw: str) -> str:
+        """Convierte DD/MM/YYYY o DD-MM-YYYY → YYYY-MM-DD."""
+        m = re.match(r'(\d{2})[/\-](\d{2})[/\-](\d{4})', raw)
+        if m:
+            return f"{m.group(3)}-{m.group(2)}-{m.group(1)}"
+        m = re.match(r'(\d{4})[/\-](\d{2})[/\-](\d{2})', raw)
+        if m:
+            return raw  # ya en formato YYYY-MM-DD
+        return raw
+
+    _DATE_RE = r'(\d{2}[/\-]\d{2}[/\-]\d{4}|\d{4}[/\-]\d{2}[/\-]\d{2})'
+
+    # Fecha de nacimiento — prioridad explícita antes que procedimiento
+    for p in [
+        rf'Fecha\s+(?:de\s+)?[Nn]acimiento[:\s]+{_DATE_RE}',
+        rf'F\.?\s*[Nn]ac\.?[:\s]+{_DATE_RE}',
+        rf'(?:NACIDO|NACIDA)\s+(?:EL\s+)?[:\s]*{_DATE_RE}',
+        rf'(?:Date\s+of\s+birth|DOB)[:\s]+{_DATE_RE}',
+    ]:
+        v = _buscar(p, texto)
+        if v:
+            d['fecha_nacimiento'] = _parsear_fecha(v)
+            break
+
+    # Fecha del procedimiento / cirugía
+    for p in [
+        rf'Fecha\s+(?:del?\s+)?(?:procedimiento|cirug[ií]a|intervenci[oó]n)[:\s]+{_DATE_RE}',
+        rf'Fecha\s+(?:de\s+)?(?:ingreso|atenci[oó]n|registro)[:\s]+{_DATE_RE}',
+        rf'FECHA\s+(?:PROCEDIMIENTO|CIRUGIA|CIRUG[IÍ]A)[:\s]+{_DATE_RE}',
+    ]:
+        v = _buscar(p, texto)
+        if v:
+            d['fecha_procedimiento'] = _parsear_fecha(v)
+            break
 
     # ── Etnia ─────────────────────────────────────────────────────────────────
     etnia_raw = _buscar(r'(?:Etnia|Grupo\s+[eé]tnico)[:\s]+([^\n]{2,40})', texto)
@@ -328,10 +369,30 @@ def campos_de_texto(texto: str) -> dict:
             d['provincia_nacimiento'] = match
 
     # ── Hormonas – texto libre ────────────────────────────────────────────────
+    # Jerarquía de búsqueda (de más a menos estricto):
+    #   1. "HORMONA: 3.53"           → separador ":" + decimal obligatorio
+    #   2. "(HORMONA) 3.53"          → cierre paréntesis + decimal
+    #   3. "HORMONA 3.53 UNIDAD"     → espacio + decimal + unidad
+    #   4. "HORMONA 44" (entero)     → solo si es ≤5 dígitos (excluye cédulas de 10 dígitos)
+    def _buscar_hormona(patron: str, texto: str) -> str:
+        # Prioridad 1: con ":" y decimal
+        v = _num_texto(rf'(?:{patron})\s*:\s*(-?\d+[.,]\d+)', texto)
+        if v:
+            return v
+        # Prioridad 2: cierre paréntesis + decimal
+        v = _num_texto(rf'(?:{patron})\s*\)\s*(-?\d+[.,]\d+)', texto)
+        if v:
+            return v
+        # Prioridad 3: espacio directo + decimal
+        v = _num_texto(rf'(?:{patron})\s+(-?\d+[.,]\d+)', texto)
+        if v:
+            return v
+        # Prioridad 4: entero pequeño (≤5 dígitos, no cédula/HCU)
+        v = _num_texto(rf'(?:{patron})[:\s)]+(-?\d{{1,5}})(?!\d)', texto)
+        return v
+
     for patron, c_val in MAPA_HORMONAS:
-        v = _num_texto(
-            rf'(?:{patron})[:\s]+(-?\d+[.,]?\d*)\s*(?:ng|mU|µg|ug|pg|nmol|pmol|µUI|mUI|UI)?(?:/\w+)?',
-            texto)
+        v = _buscar_hormona(patron, texto)
         if v and c_val:
             d[c_val] = v
 
@@ -391,7 +452,7 @@ def campos_de_texto(texto: str) -> dict:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 _CAMPOS_VALIDOS = {
-    'nombre','hcu','edad_diagnostico','sexo','fecha_procedimiento','etnia',
+    'nombre','hcu','edad_diagnostico','sexo','fecha_nacimiento','fecha_procedimiento','etnia',
     'nivel_instruccion','provincia_nacimiento','pais_nacimiento',
     'procedimiento','cirujano','primera_cirugia','solo_biopsia',
     'extranjero','antecedentes_fam','detalle_sindrome',
@@ -414,15 +475,21 @@ REGLAS ESTRICTAS:
 - Incluye solo los campos que encuentres claramente en el texto.
 - Valores numéricos (hormonas, edad, tamaño tumor, Ki-67): número como string con punto decimal. Ej: "25.3"
 - Campos si/no (acromegalia, cushing, cefalea, etc.): exactamente "si" o "no"
+- fecha_nacimiento: formato YYYY-MM-DD
 - fecha_procedimiento: formato YYYY-MM-DD
-- sexo: "M" o "F"
+- sexo: "M" o "F". "PACIENTE FEMENINA/MASCULINO" también indica sexo.
 - etnia: mestizo | indigena | afroecuatoriano | blanco | montubio | otro
 - nivel_instruccion: ninguna | primaria_completa | primaria_incompleta | secundaria_completa | secundaria_incompleta | superior_completa | superior_incompleta
 - tipo_histologico: prolactinoma | somatotropinoma | corticotropinoma | gonadotropinoma | tirotropinoma | carcinoma
 - knosp: 0 | 1 | 2 | 3 | 4
 
+REGLAS PARA HORMONAS INLINE:
+Los valores pueden aparecer en texto corrido: "TSH 3.53 UIU/ML, PROLACTINA 26.06 NG/ML,
+HORMONA FOLÍCULO ESTIMULANTE (FSH) 4.44, TIROXINA LIBRE (FT4) 0.97 NG/DL".
+Extrae el número inmediatamente después del nombre o abreviatura de la hormona.
+
 CAMPOS A EXTRAER:
-nombre, hcu, edad_diagnostico, sexo, fecha_procedimiento, etnia, nivel_instruccion,
+nombre, hcu, edad_diagnostico, sexo, fecha_nacimiento, fecha_procedimiento, etnia, nivel_instruccion,
 provincia_nacimiento, pais_nacimiento, procedimiento, cirujano,
 primera_cirugia, solo_biopsia, extranjero, antecedentes_fam,
 gh, igf1, lh, fsh, estradiol, testosterona, tsh, t4l, cortisol, acth, prolactina, ki67,
@@ -438,45 +505,67 @@ TEXTO DEL HISTORIAL:
 
 def campos_de_gemini(texto: str) -> tuple[dict, str]:
     """
-    Llama a Gemini para extraer campos.
+    Llama a Gemini REST API directamente (sin SDK).
     Devuelve (campos_dict, status_msg).
     status_msg: 'ok:<modelo>' | 'sin_key' | 'error:<detalle>'
     """
-    import os, json
+    import os, json, requests
+
     api_key = os.environ.get('GEMINI_API_KEY', '').strip()
     if not api_key:
         return {}, 'sin_key'
 
-    modelo = os.environ.get('GEMINI_MODEL', 'gemini-1.5-flash')
+    modelo = os.environ.get('GEMINI_MODEL', 'gemini-2.5-flash')
+    url = (
+        f'https://generativelanguage.googleapis.com/v1beta/models/'
+        f'{modelo}:generateContent?key={api_key}'
+    )
+
+    payload = {
+        'contents': [{'parts': [{'text': _PROMPT_GEMINI.format(texto=texto[:12_000])}]}],
+        'generationConfig': {
+            'temperature': 0,
+            'maxOutputTokens': 2048,
+            'thinkingConfig': {'thinkingBudget': 0},
+        },
+    }
+
     try:
-        import google.generativeai as genai
-        genai.configure(api_key=api_key)
-        model = genai.GenerativeModel(modelo)
+        resp = requests.post(url, json=payload, timeout=60)
+        if resp.status_code != 200:
+            return {}, f'error:HTTP {resp.status_code} — {resp.text[:120]}'
 
-        texto_recortado = texto[:12_000]
-        prompt = _PROMPT_GEMINI.format(texto=texto_recortado)
+        data = resp.json()
+        # gemini-2.5-flash devuelve varias partes (thinking + respuesta)
+        # tomamos la parte que contiene el JSON (ignoramos partes "thought")
+        parts = data['candidates'][0]['content']['parts']
+        raw = ''
+        for part in parts:
+            if part.get('thought'):
+                continue
+            txt = part.get('text', '').strip()
+            if '{' in txt:
+                raw = txt
+                break
+        if not raw:
+            raw = parts[-1].get('text', '').strip()
 
-        resp = model.generate_content(
-            prompt,
-            generation_config={'temperature': 0, 'max_output_tokens': 1024},
-        )
-        raw = resp.text.strip()
-
-        # Extraer el objeto JSON de la respuesta (Gemini puede añadir texto antes/después)
         inicio = raw.find('{')
         fin    = raw.rfind('}')
         if inicio == -1 or fin == -1 or fin <= inicio:
-            return {}, f'error:no se encontró JSON en la respuesta'
+            return {}, 'error:no se encontró JSON en la respuesta'
         raw = raw[inicio:fin + 1]
 
-        data = json.loads(raw)
-        if not isinstance(data, dict):
-            return {}, f'error:respuesta no es JSON objeto'
+        resultado = json.loads(raw)
+        if not isinstance(resultado, dict):
+            return {}, 'error:respuesta no es objeto JSON'
 
-        campos = {k: str(v).strip() for k, v in data.items()
+        campos = {k: str(v).strip() for k, v in resultado.items()
                   if k in _CAMPOS_VALIDOS and v not in (None, '', 'null', 'N/A')}
         return campos, f'ok:{modelo}'
 
+    except requests.Timeout:
+        return {}, 'error:timeout — Gemini tardó más de 60 s'
     except Exception as e:
         return {}, f'error:{type(e).__name__}: {str(e)[:120]}'
 
@@ -560,6 +649,21 @@ def extraer_todo(archivo) -> tuple[str, dict, dict, str]:
         campos.update(gemini_campos)
     except Exception as e:
         gemini_status = f'error:{e}'
+
+    # ── 4b. Normalizar provincia_nacimiento al valor exacto del modelo ────────
+    _PROVINCIAS_NORM = [
+        'Azuay','Bolívar','Cañar','Carchi','Chimborazo','Cotopaxi','El Oro',
+        'Esmeraldas','Galápagos','Guayas','Imbabura','Loja','Los Ríos','Manabí',
+        'Morona Santiago','Napo','Orellana','Pastaza','Pichincha','Santa Elena',
+        'Santo Domingo de los Tsáchilas','Sucumbíos','Tungurahua','Zamora Chinchipe',
+    ]
+    if 'provincia_nacimiento' in campos:
+        pr = campos['provincia_nacimiento'].strip()
+        match = next((p for p in _PROVINCIAS_NORM if p.lower() in pr.lower() or pr.lower() in p.lower()), None)
+        if match:
+            campos['provincia_nacimiento'] = match
+        else:
+            del campos['provincia_nacimiento']
 
     # ── 5. Detectar página de cada campo ─────────────────────────────────────
     paginas = _detectar_paginas(campos, paginas_texto)

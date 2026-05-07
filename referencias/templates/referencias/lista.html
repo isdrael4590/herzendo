@@ -1,0 +1,125 @@
+{% extends 'pacientes/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h5 mb-0">
+    <i class="bi bi-table me-2 text-primary"></i>Valores de Referencia por Versión
+  </h2>
+  {% if puede_editar %}
+  <div class="d-flex gap-2">
+    <a href="{% url 'referencias:importar_excel' %}" class="btn btn-success btn-sm">
+      <i class="bi bi-file-earmark-spreadsheet-fill me-1"></i>Importar Excel
+    </a>
+    <a href="{% url 'referencias:crear' %}" class="btn btn-primary btn-sm">
+      <i class="bi bi-plus-lg me-1"></i>Nuevo
+    </a>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Filtro por hormona -->
+<form method="get" class="mb-4">
+  <div class="input-group" style="max-width:380px;">
+    <select name="hormona" class="form-select form-select-sm">
+      <option value="">— Todas las hormonas —</option>
+      {% for val, label in hormonas %}
+        <option value="{{ val }}" {% if val == hormona_sel %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+    <button class="btn btn-outline-primary btn-sm" type="submit">
+      <i class="bi bi-funnel-fill"></i>
+    </button>
+    {% if hormona_sel %}
+    <a href="{% url 'referencias:lista' %}" class="btn btn-outline-secondary btn-sm">
+      <i class="bi bi-x-lg"></i>
+    </a>
+    {% endif %}
+  </div>
+</form>
+
+{% if grupos %}
+  {% for nombre_hormona, registros in grupos.items %}
+  <div class="card mb-4">
+    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center py-2">
+      <strong><i class="bi bi-droplet-fill me-2"></i>{{ nombre_hormona }}</strong>
+      {% if puede_editar %}
+      <a href="{% url 'referencias:crear' %}?hormona={{ registros.0.hormona }}" class="btn btn-sm btn-outline-light">
+        <i class="bi bi-plus-lg me-1"></i>Agregar versión
+      </a>
+      {% endif %}
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-sm table-hover mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Versión</th>
+              <th>Grupo clínico</th>
+              <th>Tipo muestra</th>
+              <th class="text-center border-start" colspan="3">Unidad 1</th>
+              <th class="text-center border-start" colspan="3">Unidad 2</th>
+              <th class="text-center border-start" colspan="2">Intervalo técnico</th>
+              {% if puede_editar %}<th style="width:80px"></th>{% endif %}
+            </tr>
+            <tr class="table-light text-muted small">
+              <th></th><th></th><th></th>
+              <th class="border-start text-center fw-normal">Unidad</th>
+              <th class="text-center fw-normal">Mín</th>
+              <th class="text-center fw-normal">Máx</th>
+              <th class="border-start text-center fw-normal">Unidad</th>
+              <th class="text-center fw-normal">Mín</th>
+              <th class="text-center fw-normal">Máx</th>
+              <th class="border-start text-center fw-normal">Mín</th>
+              <th class="text-center fw-normal">Máx</th>
+              {% if puede_editar %}<th></th>{% endif %}
+            </tr>
+          </thead>
+          <tbody>
+            {% for vr in registros %}
+            <tr>
+              <td class="fw-semibold small">{{ vr.version }}</td>
+              <td class="small">{{ vr.grupo_clinico|default:"—" }}</td>
+              <td class="small text-muted">{{ vr.tipo_muestra|default:"—" }}</td>
+              <td class="text-center border-start small">{{ vr.unidad|default:"—" }}</td>
+              <td class="text-center small">{{ vr.ref_min|default:"—" }}</td>
+              <td class="text-center small">{{ vr.ref_max|default:"—" }}</td>
+              <td class="text-center border-start small">{{ vr.unidad2|default:"—" }}</td>
+              <td class="text-center small">{{ vr.ref_min2|default:"—" }}</td>
+              <td class="text-center small">{{ vr.ref_max2|default:"—" }}</td>
+              <td class="text-center border-start small">{{ vr.intervalo_min|default:"—" }}</td>
+              <td class="text-center small">{{ vr.intervalo_max|default:"—" }}</td>
+              {% if puede_editar %}
+              <td class="text-center">
+                <a href="{% url 'referencias:editar' vr.pk %}" class="btn btn-outline-primary btn-sm py-0 px-1 me-1" title="Editar">
+                  <i class="bi bi-pencil-fill"></i>
+                </a>
+                {% if puede_eliminar %}
+                <a href="{% url 'referencias:eliminar' vr.pk %}" class="btn btn-outline-danger btn-sm py-0 px-1" title="Eliminar">
+                  <i class="bi bi-trash-fill"></i>
+                </a>
+                {% endif %}
+              </td>
+              {% endif %}
+            </tr>
+            {% if vr.observaciones %}
+            <tr class="table-warning">
+              <td colspan="{% if puede_editar %}12{% else %}11{% endif %}" class="small py-1 ps-3">
+                <i class="bi bi-chat-left-text me-1 text-muted"></i>{{ vr.observaciones }}
+              </td>
+            </tr>
+            {% endif %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+{% else %}
+  <div class="alert alert-info">
+    <i class="bi bi-info-circle me-1"></i>
+    No hay valores de referencia registrados.
+    {% if puede_editar %}<a href="{% url 'referencias:crear' %}">Agregar el primero</a>.{% endif %}
+  </div>
+{% endif %}
+{% endblock %}

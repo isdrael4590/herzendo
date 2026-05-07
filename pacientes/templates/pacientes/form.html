@@ -2,7 +2,27 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-  <h2 class="h5 mb-0"><i class="bi bi-person-lines-fill me-2 text-primary"></i>{{ titulo }}</h2>
+  <div class="d-flex align-items-center gap-3 flex-wrap">
+    <h2 class="h5 mb-0"><i class="bi bi-person-lines-fill me-2 text-primary"></i>{{ titulo }}</h2>
+    {% if object %}
+    <!-- Botones de estado (solo en edición) -->
+    <div class="btn-group btn-group-sm" id="estado-btns" role="group"
+         data-pk="{{ object.pk }}"
+         data-url="{% url 'cambiar_estado' object.pk %}"
+         data-estado="{{ object.estado }}">
+      <button type="button"
+              class="btn {% if object.estado == 'pendiente' %}btn-warning{% else %}btn-outline-warning{% endif %}"
+              id="btn-pendiente" onclick="setEstado('pendiente')">
+        <i class="bi bi-clock-fill me-1"></i>Pendiente
+      </button>
+      <button type="button"
+              class="btn {% if object.estado == 'completado' %}btn-success{% else %}btn-outline-success{% endif %}"
+              id="btn-completado" onclick="setEstado('completado')">
+        <i class="bi bi-check-circle-fill me-1"></i>Completado
+      </button>
+    </div>
+    {% endif %}
+  </div>
   <a href="{% url 'lista' %}" class="btn btn-outline-secondary btn-sm">
     <i class="bi bi-arrow-left me-1"></i>Volver
   </a>
@@ -35,13 +55,14 @@
   <!-- ── DATOS GENERALES ─────────────────────────────────────── -->
   <div class="tab-pane fade show active" id="tab-gral">
     <div class="row g-2">
-      {% include 'pacientes/_field.html' with f=form.fecha_procedimiento col=3 %}
       {% include 'pacientes/_field.html' with f=form.nombre col=5 %}
       {% include 'pacientes/_field.html' with f=form.hcu col=2 %}
+      {% include 'pacientes/_field.html' with f=form.fecha_nacimiento col=2 %}
       {% include 'pacientes/_field.html' with f=form.edad_diagnostico col=2 %}
-      {% include 'pacientes/_field.html' with f=form.sexo col=2 %}
+      {% include 'pacientes/_field.html' with f=form.sexo col=1 %}
+      {% include 'pacientes/_field.html' with f=form.fecha_procedimiento col=3 %}
       {% include 'pacientes/_field.html' with f=form.procedimiento col=5 %}
-      {% include 'pacientes/_field.html' with f=form.cirujano col=5 %}
+      {% include 'pacientes/_field.html' with f=form.cirujano col=4 %}
       {% include 'pacientes/_field.html' with f=form.primera_cirugia col=3 %}
       {% include 'pacientes/_field.html' with f=form.solo_biopsia col=3 %}
       {% include 'pacientes/_field.html' with f=form.provincia_nacimiento col=4 %}
@@ -57,6 +78,7 @@
   <!-- ── SOMATOTROPO ────────────────────────────────────────── -->
   <div class="tab-pane fade" id="tab-soma">
     <h6 class="text-muted border-bottom pb-1 mb-2">Hormona de Crecimiento (GH)</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='gh' min_field='gh_ref_min' max_field='gh_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.gh col=3 %}
       {% include 'pacientes/_field.html' with f=form.gh_ref_min col=3 %}
@@ -64,6 +86,7 @@
       {% include 'pacientes/_field.html' with f=form.gh_interp col=3 %}
     </div>
     <h6 class="text-muted border-bottom pb-1 mb-2">IGF-1</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='igf1' min_field='igf1_ref_min' max_field='igf1_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.igf1 col=3 %}
       {% include 'pacientes/_field.html' with f=form.igf1_ref_min col=3 %}
@@ -80,6 +103,7 @@
   <!-- ── GONADOTROPO ────────────────────────────────────────── -->
   <div class="tab-pane fade" id="tab-gona">
     <h6 class="text-muted border-bottom pb-1 mb-2">LH</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='lh' min_field='lh_ref_min' max_field='lh_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.lh col=3 %}
       {% include 'pacientes/_field.html' with f=form.lh_ref_min col=3 %}
@@ -87,6 +111,7 @@
       {% include 'pacientes/_field.html' with f=form.lh_interp col=3 %}
     </div>
     <h6 class="text-muted border-bottom pb-1 mb-2">FSH</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='fsh' min_field='fsh_ref_min' max_field='fsh_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.fsh col=3 %}
       {% include 'pacientes/_field.html' with f=form.fsh_ref_min col=3 %}
@@ -94,6 +119,7 @@
       {% include 'pacientes/_field.html' with f=form.fsh_interp col=3 %}
     </div>
     <h6 class="text-muted border-bottom pb-1 mb-2">Estradiol</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='estradiol' min_field='estradiol_ref_min' max_field='estradiol_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.estradiol col=3 %}
       {% include 'pacientes/_field.html' with f=form.estradiol_ref_min col=3 %}
@@ -101,6 +127,7 @@
       {% include 'pacientes/_field.html' with f=form.estradiol_interp col=3 %}
     </div>
     <h6 class="text-muted border-bottom pb-1 mb-2">Testosterona Total</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='testosterona' min_field='testosterona_ref_min' max_field='testosterona_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.testosterona col=3 %}
       {% include 'pacientes/_field.html' with f=form.testosterona_ref_min col=3 %}
@@ -118,12 +145,14 @@
   <!-- ── TIROIDEO ───────────────────────────────────────────── -->
   <div class="tab-pane fade" id="tab-tiro">
     <h6 class="text-muted border-bottom pb-1 mb-2">TSH</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='tsh' min_field='tsh_ref_min' max_field='tsh_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.tsh col=4 %}
       {% include 'pacientes/_field.html' with f=form.tsh_ref_min col=4 %}
       {% include 'pacientes/_field.html' with f=form.tsh_ref_max col=4 %}
     </div>
     <h6 class="text-muted border-bottom pb-1 mb-2">T4 Libre</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='ft4' min_field='t4l_ref_min' max_field='t4l_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.t4l col=4 %}
       {% include 'pacientes/_field.html' with f=form.t4l_ref_min col=4 %}
@@ -138,6 +167,7 @@
   <!-- ── CORTICOTROPO ───────────────────────────────────────── -->
   <div class="tab-pane fade" id="tab-cort">
     <h6 class="text-muted border-bottom pb-1 mb-2">Cortisol</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='cortisol' min_field='cortisol_ref_min' max_field='cortisol_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.cortisol col=3 %}
       {% include 'pacientes/_field.html' with f=form.cortisol_ref_min col=3 %}
@@ -147,6 +177,7 @@
       {% include 'pacientes/_field.html' with f=form.eje_corticotropo_ins col=6 %}
     </div>
     <h6 class="text-muted border-bottom pb-1 mb-2">ACTH Plasmática</h6>
+    {% include 'pacientes/_ref_selector.html' with hormona='acth' min_field='acth_ref_min' max_field='acth_ref_max' %}
     <div class="row g-2 mb-3">
       {% include 'pacientes/_field.html' with f=form.acth col=3 %}
       {% include 'pacientes/_field.html' with f=form.acth_ref_min col=3 %}
@@ -160,6 +191,7 @@
 
   <!-- ── PROLACTINA ─────────────────────────────────────────── -->
   <div class="tab-pane fade" id="tab-prol">
+    {% include 'pacientes/_ref_selector.html' with hormona='prolactina' min_field='prolactina_ref_min' max_field='prolactina_ref_max' %}
     <div class="row g-2">
       {% include 'pacientes/_field.html' with f=form.prolactina col=3 %}
       {% include 'pacientes/_field.html' with f=form.prolactina_ref_min col=3 %}
@@ -350,40 +382,42 @@
   // ── Ki-67 → interpretación automática ────────────────────────
   const inputKi67       = form.querySelector('[name="ki67"]');
   const selectKi67Interp = form.querySelector('[name="ki67_interp"]');
-  if (inputKi67 && selectKi67Interp) {
-    inputKi67.addEventListener('input', function () {
-      const k = parseFloat(this.value);
-      if (isNaN(k) || this.value === '') {
-        selectKi67Interp.value = '';
-      } else if (k < 1) {
-        selectKi67Interp.value = 'muy_bajo';
-      } else if (k <= 3) {
-        selectKi67Interp.value = 'bajo';
-      } else if (k <= 10) {
-        selectKi67Interp.value = 'alto';
-      } else {
-        selectKi67Interp.value = 'muy_alto';
-      }
-    });
+  function calcularKi67() {
+    if (!inputKi67 || !selectKi67Interp) return;
+    const k = parseFloat(inputKi67.value);
+    if (isNaN(k) || inputKi67.value === '') {
+      selectKi67Interp.value = '';
+    } else if (k < 1) {
+      selectKi67Interp.value = 'muy_bajo';
+    } else if (k <= 3) {
+      selectKi67Interp.value = 'bajo';
+    } else if (k <= 10) {
+      selectKi67Interp.value = 'alto';
+    } else {
+      selectKi67Interp.value = 'muy_alto';
+    }
   }
+  if (inputKi67) inputKi67.addEventListener('input', calcularKi67);
+  calcularKi67();
 
   // ── Auto-calcular interpretación del tamaño del tumor ─────────
   const inputTamano = form.querySelector('[name="tamano_tumor"]');
   const selectInterp = form.querySelector('[name="tamano_tumor_interp"]');
-  if (inputTamano && selectInterp) {
-    inputTamano.addEventListener('input', function () {
-      const t = parseFloat(this.value);
-      if (isNaN(t) || this.value === '') {
-        selectInterp.value = '';
-      } else if (t < 10) {
-        selectInterp.value = 'microadenoma';
-      } else if (t <= 40) {
-        selectInterp.value = 'macroadenoma';
-      } else {
-        selectInterp.value = 'gigante';
-      }
-    });
+  function calcularTamanoTumor() {
+    if (!inputTamano || !selectInterp) return;
+    const t = parseFloat(inputTamano.value);
+    if (isNaN(t) || inputTamano.value === '') {
+      selectInterp.value = '';
+    } else if (t < 10) {
+      selectInterp.value = 'microadenoma';
+    } else if (t <= 40) {
+      selectInterp.value = 'macroadenoma';
+    } else {
+      selectInterp.value = 'gigante';
+    }
   }
+  if (inputTamano) inputTamano.addEventListener('input', calcularTamanoTumor);
+  calcularTamanoTumor();
 
   // ── Helper genérico: valor vs rango → interp ─────────────────
   function interpRango(inputVal, inputMin, inputMax, select) {
@@ -440,6 +474,71 @@
   bindInterp('igf1',    'igf1_ref_min',    'igf1_ref_max',    'igf1_interp');
   bindInterp('cortisol','cortisol_ref_min','cortisol_ref_max','cortisol_interp');
   bindInterp('acth',    'acth_ref_min',    'acth_ref_max',    'acth_interp');
+
+  // ── Autocompletar ref_min / ref_max desde tabla de referencias ─
+  function apiUrl(hormona) {
+    return '{% url "referencias:api_hormona" "HORMONA" %}'.replace('HORMONA', hormona);
+  }
+  document.querySelectorAll('.ref-selector').forEach(function(sel) {
+    const hormona = sel.dataset.hormona;
+    fetch(apiUrl(hormona))
+      .then(r => r.json())
+      .then(data => {
+        const grupos = data.grupos || [];
+        if (grupos.length === 0) {
+          sel.closest('div').style.display = 'none';
+          return;
+        }
+        grupos.forEach(function(g) {
+          const opt = document.createElement('option');
+          opt.value = JSON.stringify(g);
+          opt.textContent = g.label;
+          sel.appendChild(opt);
+        });
+        // Seleccionar el primero y autocompletar
+        if (grupos.length > 0) {
+          sel.selectedIndex = 0;
+          sel.dispatchEvent(new Event('change'));
+        }
+      })
+      .catch(function() {
+        sel.closest('div').style.display = 'none';
+      });
+
+    sel.addEventListener('change', function() {
+      if (!sel.value) return;
+      const g = JSON.parse(sel.value);
+      const minEl = form.querySelector('[name="' + sel.dataset.min + '"]');
+      const maxEl = form.querySelector('[name="' + sel.dataset.max + '"]');
+      if (minEl && g.ref_min !== null) { minEl.value = g.ref_min; minEl.dispatchEvent(new Event('input')); }
+      if (maxEl && g.ref_max !== null) { maxEl.value = g.ref_max; maxEl.dispatchEvent(new Event('input')); }
+      const unidadEl = sel.closest('div').querySelector('.ref-unidad-label');
+      if (unidadEl) unidadEl.textContent = g.unidad ? '(' + g.unidad + ')' : '';
+    });
+  });
 })();
+
+// ── Estado Pendiente / Completado ─────────────────────────────────────────
+function setEstado(nuevoEstado) {
+  const grp = document.getElementById('estado-btns');
+  if (!grp) return;
+  const url = grp.dataset.url;
+  const csrf = document.querySelector('[name=csrfmiddlewaretoken]').value;
+  const fd = new FormData();
+  fd.append('estado', nuevoEstado);
+  fd.append('csrfmiddlewaretoken', csrf);
+  fetch(url, { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(data => {
+      if (data.error) { alert(data.error); return; }
+      const e = data.estado;
+      const btnP = document.getElementById('btn-pendiente');
+      const btnC = document.getElementById('btn-completado');
+      btnP.className = 'btn btn-sm ' + (e === 'pendiente' ? 'btn-warning' : 'btn-outline-warning');
+      btnC.className = 'btn btn-sm ' + (e === 'completado' ? 'btn-success' : 'btn-outline-success');
+      grp.dataset.estado = e;
+    })
+    .catch(() => alert('Error al cambiar el estado.'));
+}
 </script>
 {% endblock %}

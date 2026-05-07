@@ -1,0 +1,225 @@
+{% extends 'pacientes/base.html' %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="h5 mb-0">
+    <i class="bi bi-file-earmark-spreadsheet-fill me-2 text-success"></i>
+    Importar valores de referencia desde Excel
+  </h2>
+  <a href="{% url 'referencias:lista' %}" class="btn btn-outline-secondary btn-sm">
+    <i class="bi bi-arrow-left me-1"></i>Volver
+  </a>
+</div>
+
+<!-- ── Instrucciones ─────────────────────────────────────────────────────── -->
+<div class="card mb-4">
+  <div class="card-header bg-light">
+    <strong><i class="bi bi-info-circle me-1 text-primary"></i>Formato esperado del Excel</strong>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-sm table-bordered mb-0 small">
+        <thead class="table-primary">
+          <tr>
+            <th>A — Hormona <small class="fw-normal">(o sección)</small></th>
+            <th>B — Versión</th>
+            <th>C — Grupo clínico</th>
+            <th>D — Tipo muestra</th>
+            <th>E — Ref. Mín</th>
+            <th>F — Ref. Máx</th>
+            <th>G — Unidad</th>
+            <th>H — Mín 2 <small class="fw-normal text-muted">(opcional)</small></th>
+            <th>I — Máx 2 <small class="fw-normal text-muted">(opcional)</small></th>
+            <th>J — Unidad 2 <small class="fw-normal text-muted">(opcional)</small></th>
+            <th>K — Int. Mín <small class="fw-normal text-muted">(opcional)</small></th>
+            <th>L — Int. Máx <small class="fw-normal text-muted">(opcional)</small></th>
+            <th>M — Obs. <small class="fw-normal text-muted">(opcional)</small></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="text-muted">gh / tsh / ft4 / igf1 / lh / fsh / estradiol / testosterona / cortisol / acth / prolactina</td>
+            <td>V1.0, V2.0</td>
+            <td>Adultos sanos</td>
+            <td>Suero</td>
+            <td>0.35</td>
+            <td>4.94</td>
+            <td>µUI/mL</td>
+            <td colspan="6" class="text-muted text-center">— opcionales —</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="px-3 py-2 small text-muted">
+      <i class="bi bi-lightbulb me-1 text-warning"></i>
+      La primera fila puede ser <strong>cabecera</strong> (se detecta automáticamente) o datos directamente.
+      Las filas de título de sección (ej. <em>"GH – Hormona de Crecimiento"</em>) se reconocen y se usan
+      como contexto para las filas siguientes.
+    </div>
+  </div>
+</div>
+
+<!-- ── Formulario de carga ───────────────────────────────────────────────── -->
+{% if not resultado %}
+<div class="card mb-4">
+  <div class="card-header bg-success text-white">
+    <strong><i class="bi bi-upload me-1"></i>Seleccionar archivo</strong>
+  </div>
+  <div class="card-body">
+    <form method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+
+      <!-- Zona drag & drop -->
+      <div id="drop-zone"
+           class="border border-2 rounded p-5 text-center text-muted mb-3"
+           style="border-style:dashed!important;cursor:pointer;border-color:#198754!important;">
+        <i class="bi bi-file-earmark-spreadsheet display-4 d-block mb-2 text-success"></i>
+        <p class="mb-1 fw-semibold">Arrastre el archivo Excel aquí o haga clic para seleccionar</p>
+        <p class="small mb-3">Solo archivos .xlsx o .xls</p>
+        <input type="file" id="excel-input" name="archivo" accept=".xlsx,.xls" class="d-none">
+        <button type="button" class="btn btn-outline-success btn-sm"
+                onclick="document.getElementById('excel-input').click()">
+          <i class="bi bi-folder2-open me-1"></i>Examinar archivos
+        </button>
+      </div>
+
+      <div id="archivo-info" class="d-none alert alert-success py-2 d-flex align-items-center gap-2 mb-3">
+        <i class="bi bi-file-earmark-spreadsheet-fill text-success fs-4"></i>
+        <span id="archivo-nombre" class="fw-semibold flex-grow-1"></span>
+        <span id="archivo-tamano" class="text-muted small"></span>
+      </div>
+
+      <!-- Modo de importación -->
+      <div class="mb-3">
+        <label class="form-label fw-semibold small">Modo de importación</label>
+        <div class="d-flex flex-column gap-1">
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="modo" id="modo_crear" value="crear" checked>
+            <label class="form-check-label small" for="modo_crear">
+              <strong>Solo crear nuevos</strong> — omite filas que ya existan (sin sobrescribir)
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="modo" id="modo_actualizar" value="actualizar">
+            <label class="form-check-label small" for="modo_actualizar">
+              <strong>Crear y actualizar</strong> — crea nuevos y sobreescribe existentes
+            </label>
+          </div>
+          <div class="form-check">
+            <input class="form-check-input" type="radio" name="modo" id="modo_reemplazar" value="reemplazar">
+            <label class="form-check-label small text-danger" for="modo_reemplazar">
+              <strong>Reemplazar todo</strong> — elimina TODOS los registros actuales antes de importar
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div id="alerta-reemplazar" class="d-none alert alert-danger py-2 small mb-3">
+        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+        <strong>¡Atención!</strong> El modo "Reemplazar todo" eliminará permanentemente todos los valores de referencia existentes.
+      </div>
+
+      <button type="submit" class="btn btn-success" id="btn-importar" disabled>
+        <i class="bi bi-cloud-upload-fill me-1"></i>Importar
+      </button>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- ── Resultado ─────────────────────────────────────────────────────────── -->
+{% if resultado %}
+<div class="card mb-4">
+  <div class="card-header bg-success text-white">
+    <strong><i class="bi bi-check-circle-fill me-1"></i>Resultado de la importación</strong>
+  </div>
+  <div class="card-body">
+    <div class="row g-3 mb-3">
+      <div class="col-6 col-md-3">
+        <div class="border rounded text-center p-3">
+          <div class="display-6 fw-bold text-success">{{ resultado.creados }}</div>
+          <div class="small text-muted">Creados</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="border rounded text-center p-3">
+          <div class="display-6 fw-bold text-primary">{{ resultado.actualizados }}</div>
+          <div class="small text-muted">Actualizados</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="border rounded text-center p-3">
+          <div class="display-6 fw-bold text-secondary">{{ resultado.omitidos }}</div>
+          <div class="small text-muted">Omitidos</div>
+        </div>
+      </div>
+      <div class="col-6 col-md-3">
+        <div class="border rounded text-center p-3">
+          <div class="display-6 fw-bold {% if resultado.errores %}text-danger{% else %}text-muted{% endif %}">
+            {{ resultado.errores|length }}
+          </div>
+          <div class="small text-muted">Errores</div>
+        </div>
+      </div>
+    </div>
+
+    {% if resultado.errores %}
+    <div class="alert alert-warning py-2">
+      <strong><i class="bi bi-exclamation-triangle me-1"></i>Filas con error:</strong>
+      <ul class="mb-0 mt-1 small">
+        {% for fila, msg in resultado.errores %}
+        <li>Fila {{ fila }}: {{ msg }}</li>
+        {% endfor %}
+      </ul>
+    </div>
+    {% endif %}
+
+    <div class="d-flex gap-2 mt-3">
+      <a href="{% url 'referencias:lista' %}" class="btn btn-primary btn-sm">
+        <i class="bi bi-table me-1"></i>Ver valores de referencia
+      </a>
+      <a href="{% url 'referencias:importar_excel' %}" class="btn btn-outline-secondary btn-sm">
+        <i class="bi bi-arrow-repeat me-1"></i>Importar otro archivo
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<script>
+const dropZone  = document.getElementById('drop-zone');
+const fileInput = document.getElementById('excel-input');
+const btnImport = document.getElementById('btn-importar');
+const infoBox   = document.getElementById('archivo-info');
+
+if (dropZone) {
+  dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('bg-light'); });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('bg-light'));
+  dropZone.addEventListener('drop', e => {
+    e.preventDefault(); dropZone.classList.remove('bg-light');
+    if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+  });
+  dropZone.addEventListener('click', () => fileInput && fileInput.click());
+  fileInput && fileInput.addEventListener('change', e => { if (e.target.files[0]) setFile(e.target.files[0]); });
+
+  // Transferir el archivo al input oculto cuando viene de drop
+  function setFile(f) {
+    const dt = new DataTransfer();
+    dt.items.add(f);
+    fileInput.files = dt.files;
+    document.getElementById('archivo-nombre').textContent = f.name;
+    document.getElementById('archivo-tamano').textContent = (f.size / 1024).toFixed(0) + ' KB';
+    infoBox.classList.remove('d-none');
+    btnImport.disabled = false;
+  }
+}
+
+// Alerta modo reemplazar
+document.querySelectorAll('input[name="modo"]').forEach(r => {
+  r.addEventListener('change', () => {
+    const alerta = document.getElementById('alerta-reemplazar');
+    if (alerta) alerta.classList.toggle('d-none', r.value !== 'reemplazar' || !r.checked);
+  });
+});
+</script>
+{% endblock %}

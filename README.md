@@ -26,7 +26,8 @@
     openssl rand -base64 32 > credenciales/superuser/password.txt
     ```
 
-4. Crea tus contenedores con el comando
+4. Cambia todos los valores en el archivo `.env` iniciados con el patrón `<VARIABLE>` según tus necesidades
+5. Crea tus contenedores con el comando
 
     ```bash
     docker compose build

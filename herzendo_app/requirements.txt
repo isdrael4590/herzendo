@@ -1,8 +1,8 @@
-Django==5.0.6
-gunicorn==22.0.0
-pdfplumber==0.11.4
-pymupdf==1.24.5
-PyMySQL==1.1.1
-google-generativeai>=0.8.0
-openpyxl>=3.1.0
-requests>=2.31.0
+Django==6.*
+gunicorn==26.*
+pdfplumber==0.*
+pymupdf==1.*
+PyMySQL==1.*
+google-generativeai==0.*
+openpyxl==3.*
+requests==2.*

@@ -1,0 +1,21 @@
+herzendo:
+  environment:
+    - DEBUG=False
+    - DJANGO_SETTINGS_MODULE=herzendo.settings.prod
+    - REQUESTS_CA_BUNDLE=/herzendo/ssl/herzendo.crt
+    build:
+    target: prod
+    healthcheck:
+    test:
+      - CMD
+      - curl -k --fail http://${APP_URL} || exit 1
+    interval: 1m30s
+    timeout: 30s
+    retries: 5
+    start_period: 30s
+  command: >
+      gunicorn --bind 0.0.0.0:8000 
+      --workers 3 
+      --timeout 180 
+      --graceful-timeout 30 
+      herzendo.wsgi:application

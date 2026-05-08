@@ -1,0 +1,8 @@
+services:
+  herzendo:
+    volumes:
+    - ./herzendo_app:/herzendo
+    restart: no
+    build:
+      target: prod
+    command: sh -c "python manage.py makemigrations && python manage.py makemigrations pacientes referencias && python manage.py migrate"

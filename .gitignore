@@ -22,3 +22,8 @@ db.sqlite3
 .idea/
 *.swp
 *.swo
+
+# Ignorar archivos de migración de Django
+*/migrations/*.*
+# Secretos
+credenciales/*

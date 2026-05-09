@@ -31,6 +31,7 @@ RUN apk add --no-cache --virtual .build-deps \
 FROM --platform=$BUILDPLATFORM python:3.14-alpine AS base
 WORKDIR /home/herzendo_app/
 RUN apk add --no-cache \ 
+      ca-certificates=~20260413 \
       cairo=~1 \
       curl=~8 \
       font-liberation=~2 \
@@ -46,7 +47,8 @@ RUN apk add --no-cache \
       libxslt=~1 \
       mariadb-connector-c-dev=~3 \
       weasyprint=~66 \
-      zlib~=1
+      zlib~=1 && \
+      update-ca-certificates
 
 RUN adduser -S -G www-data www-data
 COPY --from=builder /usr/local/lib/python3.14/site-packages /usr/local/lib/python3.14/site-packages

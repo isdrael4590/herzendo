@@ -3,7 +3,6 @@ services:
     environment:
       - DEBUG=False
       - DJANGO_SETTINGS_MODULE=herzendo.settings.prod
-      - REQUESTS_CA_BUNDLE=/home/herzendo_app/ssl/herzendo.crt
     build:
       target: prod
     healthcheck:

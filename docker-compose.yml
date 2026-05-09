@@ -17,6 +17,7 @@ services:
       - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
       - DJANGO_SETTINGS_MODULE=herzendo.settings.local
       - APP_URL=${APP_URL}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
     depends_on:
       - db
     secrets:

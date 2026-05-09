@@ -20,7 +20,7 @@ server{
         uwsgi_pass uwsgi_app;
     }
     location /static/ {
-        alias /home/herzendo_app/static/;
+        alias /home/herzendo_app/herzendo/staticfiles/;
     }
     location /media/ {
         alias /home/herzendo_app/media/;

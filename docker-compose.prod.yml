@@ -17,6 +17,7 @@ services:
     command: uwsgi --ini /home/herzendo_app/config/uwsgi/uwsgi.ini
     volumes:
       - ./herzendo_app/uwsgi:/home/herzendo_app/uwsgi
+      - ./herzendo_app/herzendo/staticfiles:/home/herzendo_app/herzendo/staticfiles
   nginx:
     image: nginx:alpine
     restart: always
@@ -31,7 +32,7 @@ services:
       - ./herzendo_app/uwsgi:/home/herzendo_app/uwsgi
       - ./herzendo_app/ssl:/etc/nginx/ssl:ro
       - ./herzendo_app/conf/uwsgi/uwsgi.ini:/home/herzendo_app/uwsgi.ini
-      - ./herzendo_app/static:/home/herzendo_app/static
+      - ./herzendo_app/herzendo/staticfiles:/home/herzendo_app/herzendo/staticfiles
       - media-volume:/home/herzendo_app/media
     depends_on:
       - herzendo

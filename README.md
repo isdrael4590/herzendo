@@ -58,12 +58,20 @@
     ```bash
     UWSGI_PATH=herzendo_app/uwsgi/
     mkdir -p $UWSGI_PATH && sudo chown -R 82:82 $UWSGI_PATH && sudo chmod 777 $UWSGI_PATH
+    STATIC_PATH=herzendo_app/herzendo/staticfiles
+    mkdir -p $STATIC_PATH && sudo chown -R 82:82 $STATIC_PATH && sudo chmod 777 $STATIC_PATH
     ```
 
 4. Inicia los contenedores con
 
     ```bash
     docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+    ```
+
+5. Colecciona tus archivos estáticos con
+
+    ```bash
+    docker compose exec herzendo python /home/herzendo_app/manage.py collectstatic
     ```
 
 ## Desarrollo

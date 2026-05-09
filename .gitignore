@@ -29,3 +29,5 @@ db.sqlite3
 credenciales/*
 # Archivos SSL locales
 herzendo_app/ssl/*
+# Archivos estáticos generados
+herzendo_app/herzendo/staticfiles/*

@@ -7,7 +7,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 LOCAL_IPS = ["localhost", "127.0.0.1"]
 SECRET_KEY = os.environ.get('DJANGO_SECRET_KEY', 'django-insecure-dev-key')
-ALLOWED_HOSTS = os.environ.get('DJANGO_ALLOWED_HOSTS', '').split(',') + LOCAL_IPS
+ALLOWED_HOSTS = os.environ.get('APP_URL', '').split(',') + LOCAL_IPS
 
 INSTALLED_APPS = [
     'pacientes.apps.PacientesConfig',

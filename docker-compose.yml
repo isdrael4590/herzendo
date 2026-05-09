@@ -1,20 +1,63 @@
 services:
   herzendo:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    image: herzendo-app
+    image: herzendo_app
+    build: herzendo_app
     ports:
-      - "8001:8000"
+      - ${HERZENDO_PUERTO:-8000}:8000
     volumes:
-      - .:/app
-      - django_static:/app/staticfiles
-    env_file:
-      - .env
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
+      - media-volume:/herzendo/media
     restart: unless-stopped
+    command: python manage.py runserver 0.0.0.0:8000
+    environment:
+      - DB_DATABASE=${DB_DATABASE}
+      - DB_PASSWORD_FILE=${DB_PASSWORD_FILE}
+      - DB_PORT=${DB_PORT}
+      - DB_USER=${DB_USER}
+      - DB_HOST=${DB_HOST}
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
+      - DJANGO_SETTINGS_MODULE=herzendo.settings.local
+      - APP_URL=${APP_URL}
+    depends_on:
+      - db
+    secrets:
+      - db_password
+      - admin_password
+  db:
+    image: mariadb:11
+    restart: always
+    volumes:
+      - maria-db:/var/lib/mysql
+    environment:
+      - MARIADB_ROOT_PASSWORD_FILE=${DB_ROOT_PASSWORD_FILE}
+      - MARIADB_PASSWORD_FILE=${DB_PASSWORD_FILE}
+      - MARIADB_DATABASE=${DB_DATABASE}
+      - MARIADB_USER=${DB_USER}
+    healthcheck:
+      test:
+        - CMD
+        - healthcheck.sh
+        - "--su-mysql"
+        - "--connect"
+        - "--innodb_initialized"
+      interval: 5s
+      timeout: 3s
+      retries: 2
+      start_period: 30s
+    command: "--default-authentication-plugin=ed25519"
+    secrets:
+      - db_root_password
+      - db_password
+
+secrets:
+  db_root_password:
+    file: credenciales/database/root_password.txt
+  db_password:
+    file: credenciales/database/user_password.txt
+  admin_password:
+    file: credenciales/database/admin_password.txt
 
 volumes:
-  django_static:
+  maria-db:
+    driver: local
+  media-volume:
     driver: local

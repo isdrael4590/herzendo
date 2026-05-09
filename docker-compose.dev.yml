@@ -1,0 +1,11 @@
+services:
+  herzendo:
+    build:
+      target: debug
+    volumes:
+      - ./herzendo_app/:/home/herzendo_app
+    environment:
+      - DJANGO_DEBUG=True
+  db:
+    ports:
+      - ${DB_LOCAL_PORT:-3306}:3306

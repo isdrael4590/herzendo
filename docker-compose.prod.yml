@@ -1,0 +1,37 @@
+services:
+  herzendo:
+    environment:
+      - DEBUG=False
+      - DJANGO_SETTINGS_MODULE=herzendo.settings.prod
+      - REQUESTS_CA_BUNDLE=/home/herzendo_app/ssl/herzendo.crt
+    build:
+      target: prod
+    healthcheck:
+      test:
+        - CMD
+        - curl -k --fail http://${APP_URL} || exit 1
+      interval: 1m30s
+      timeout: 30s
+      retries: 5
+      start_period: 30s
+    command: uwsgi --ini /home/herzendo_app/config/uwsgi/uwsgi.ini
+    volumes:
+      - ./herzendo_app/uwsgi:/home/herzendo_app/uwsgi
+  nginx:
+    image: nginx:alpine
+    restart: always
+    ports:
+      - "${HERZENDO_PUERTO_HTTP:-80}:80"
+      - "${HERZENDO_PUERTO_HTTPS:-443}:443"
+    environment:
+      - HERZENDO_PUERTO_HTTPS=${HERZENDO_PUERTO_HTTPS}
+      - APP_URL=${APP_URL}
+    volumes:
+      - ./config/nginx:/etc/nginx/templates
+      - ./herzendo_app/uwsgi:/home/herzendo_app/uwsgi
+      - ./herzendo_app/ssl:/etc/nginx/ssl:ro
+      - ./herzendo_app/conf/uwsgi/uwsgi.ini:/home/herzendo_app/uwsgi.ini
+      - ./herzendo_app/static:/home/herzendo_app/static
+      - media-volume:/home/herzendo_app/media
+    depends_on:
+      - herzendo

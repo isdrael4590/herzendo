@@ -1,0 +1,28 @@
+# upstream for uWSGI
+upstream uwsgi_app {
+    server unix:/home/herzendo_app/uwsgi/uwsgi_app.sock;
+}
+server {
+    listen              80;
+    server_name         ${APP_URL};
+    return 301 https://$host:${HERZENDO_PUERTO_HTTPS}$request_uri;
+}
+server{
+    listen              443 ssl;
+    ssl_certificate     /etc/nginx/ssl/herzendo.crt;
+    ssl_certificate_key /etc/nginx/ssl/herzendo.key;
+    server_name         ${APP_URL};
+    client_max_body_size 50M;
+    error_log   stderr warn;
+    access_log /dev/stdout main;
+    location / {
+        include /etc/nginx/uwsgi_params;
+        uwsgi_pass uwsgi_app;
+    }
+    location /static/ {
+        alias /home/herzendo_app/static/;
+    }
+    location /media/ {
+        alias /home/herzendo_app/media/;
+    }
+}

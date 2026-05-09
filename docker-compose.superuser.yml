@@ -1,0 +1,15 @@
+services:
+  herzendo:
+    restart: no
+    environment:
+      DJANGO_SUPERUSER_USERNAME: admin
+      DJANGO_SUPERUSER_EMAIL: admin@example.com
+      DJANGO_SUPERUSER_PASSWORD_FILE: /run/secrets/django_superuser_password
+    command: |
+      sh -c " echo \"from django.contrib.auth import get_user_model; User = get_user_model(); User.objects.filter(username='admin').exists() or User.objects.create_superuser('admin', 'admin@example.com', open('/run/secrets/django_superuser_password').read().strip())\" | python manage.py shell "
+    secrets:
+      - django_superuser_password
+
+secrets:
+  django_superuser_password:
+    file: credenciales/superuser/password.txt

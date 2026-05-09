@@ -43,10 +43,27 @@
     docker compose -f docker-compose.yml -f docker-compose.superuser.yml up herzendo
     ```
 
-2. Inicia los contedores con
+2. Por favor crea un archivo `.crt` and `.key` para crear un servidor seguro.
 
     ```bash
-    docker compose -f docker-compose.yml up -d
+    mkdir herzendo_app/ssl/
+    openssl req -x509 -newkey rsa:2048 -sha256 -days 3650 -nodes \
+        -keyout herzendo_app/ssl/herzendo.key -out herzendo_app/ssl/herzendo.crt \
+        -subj '/CN=_.herzendo.net' \
+        -addext 'subjectAltName=DNS:_.herzendo.org'
+    ```
+
+3. Crea un archivo `uwsgi` para poder usar `nginx`
+
+    ```bash
+    UWSGI_PATH=herzendo_app/uwsgi/
+    mkdir -p $UWSGI_PATH && sudo chown -R 82:82 $UWSGI_PATH && sudo chmod 777 $UWSGI_PATH
+    ```
+
+4. Inicia los contenedores con
+
+    ```bash
+    docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
     ```
 
 ## Desarrollo

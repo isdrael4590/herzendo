@@ -59,8 +59,7 @@ USER www-data
 
 FROM --platform=$BUILDPLATFORM base AS prod
 COPY --from=builder /usr/local/bin/uwsgi /usr/local/bin/
-COPY ./config/uwsgi/uwsgi.ini /herzendo/config/uwsgi/uwsgi.ini
-EXPOSE 80 443
+COPY ./conf/uwsgi/uwsgi.ini /home/herzendo_app/config/uwsgi/uwsgi.ini
 
 FROM --platform=$BUILDPLATFORM base AS debug
 RUN pip install --no-cache-dir django-debug-toolbar==6.*

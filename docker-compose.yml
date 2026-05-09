@@ -7,7 +7,7 @@ services:
     volumes:
       - media-volume:/herzendo/media
     restart: unless-stopped
-    command: python manage.py runserver 0.0.0.0:8000
+    command: python manage.py runserver 0.0.0.0:$HERZENDO_PUERTO
     environment:
       - DB_DATABASE=${DB_DATABASE}
       - DB_PASSWORD_FILE=${DB_PASSWORD_FILE}

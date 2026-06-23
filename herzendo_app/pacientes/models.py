@@ -87,6 +87,7 @@ TIPO_HISTOLOGICO = [
     ('gonadotropinoma',   'Gonadotropinoma'),
     ('tirotropinoma',     'Tirotropinoma'),
     ('carcinoma',         'Carcinoma hipofisario'),
+    ('No_funcionante',     'Adenoma no funcionante'),
 ]
 
 
@@ -127,7 +128,7 @@ class Paciente(models.Model):
     igf1_ref_min        = models.DecimalField('IGF-1 ref. mín', **_d())
     igf1_ref_max        = models.DecimalField('IGF-1 ref. máx', **_d())
     igf1_interp         = models.CharField('Interpretación IGF-1', **_c(INTERP))
-    igf1_index_elevado  = models.DecimalField('INDEX IGF-1 (ref_max ÷ IGF-1)', null=True, blank=True, max_digits=10, decimal_places=3)
+    igf1_index_elevado  = models.DecimalField('IGF-1 ÷ ref_max', null=True, blank=True, max_digits=10, decimal_places=3)
     acromegalia         = models.CharField(**_c(SI_NO))
     tto_previo_octretide = models.CharField('Tto. previo octreótide', **_c(SI_NO))
 
@@ -233,11 +234,11 @@ class Paciente(models.Model):
             if not self.extranjero:
                 self.extranjero = 'si'
 
-        # INDEX IGF-1 = igf1_ref_max / igf1
+        # INDEX IGF-1 = igf1 / igf1_ref_max
         try:
-            if self.igf1 and self.igf1_ref_max and float(self.igf1) != 0:
+            if self.igf1 and self.igf1_ref_max and float(self.igf1_ref_max) != 0:
                 from decimal import Decimal, ROUND_HALF_UP
-                idx = Decimal(str(self.igf1_ref_max)) / Decimal(str(self.igf1))
+                idx = Decimal(str(self.igf1)) / Decimal(str(self.igf1_ref_max))
                 self.igf1_index_elevado = idx.quantize(Decimal('0.001'), rounding=ROUND_HALF_UP)
         except Exception:
             pass

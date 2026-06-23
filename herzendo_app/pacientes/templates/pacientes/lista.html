@@ -19,10 +19,26 @@
       {% if q %}<a href="{% url 'lista' %}" class="btn btn-outline-danger"><i class="bi bi-x-lg"></i></a>{% endif %}
     </div>
   </form>
-  <a href="{% url 'exportar_excel' %}{% if q %}?q={{ q }}{% endif %}"
-     class="btn btn-success btn-sm text-nowrap">
-    <i class="bi bi-file-earmark-excel-fill me-1"></i>Exportar Excel
-  </a>
+  <div class="btn-group btn-group-sm">
+    <a href="{% url 'exportar_excel' %}{% if q %}?q={{ q }}{% endif %}"
+       class="btn btn-success text-nowrap">
+      <i class="bi bi-file-earmark-excel-fill me-1"></i>Excel
+    </a>
+    <a href="{% url 'exportar_csv' %}{% if q %}?q={{ q }}{% endif %}"
+       class="btn btn-outline-success text-nowrap">
+      <i class="bi bi-filetype-csv me-1"></i>CSV
+    </a>
+  </div>
+  {% if puede_crear %}
+  <div class="btn-group btn-group-sm">
+    <a href="{% url 'importar_excel' %}" class="btn btn-outline-primary text-nowrap">
+      <i class="bi bi-file-earmark-arrow-up me-1"></i>Subir Excel
+    </a>
+    <a href="{% url 'importar_csv' %}" class="btn btn-outline-secondary text-nowrap">
+      <i class="bi bi-upload me-1"></i>Subir CSV
+    </a>
+  </div>
+  {% endif %}
 </div>
 
 <div class="card">

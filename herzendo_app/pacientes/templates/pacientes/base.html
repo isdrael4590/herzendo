@@ -32,6 +32,12 @@
           <i class="bi bi-table me-1"></i>Referencias
         </a>
 
+        {% if puede_estadisticas %}
+        <a href="{% url 'estadisticas:dashboard' %}" class="btn btn-outline-light btn-sm">
+          <i class="bi bi-graph-up-arrow me-1"></i>Estadísticas
+        </a>
+        {% endif %}
+
         {% if puede_pdf %}
         <a href="{% url 'subir_pdf' %}" class="btn btn-outline-light btn-sm">
           <i class="bi bi-file-earmark-pdf-fill me-1"></i>Cargar PDF
@@ -42,6 +48,11 @@
           {% if puede_eliminar %}
           <a href="{% url 'usuarios_lista' %}" class="btn btn-outline-light btn-sm">
             <i class="bi bi-people-fill me-1"></i>Personal
+          </a>
+          {% endif %}
+          {% if puede_codificado %}
+          <a href="{% url 'datos_codificados' %}" class="btn btn-outline-light btn-sm">
+            <i class="bi bi-123 me-1"></i>Codificado
           </a>
           {% endif %}
 

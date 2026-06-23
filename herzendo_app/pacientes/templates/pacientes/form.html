@@ -361,7 +361,7 @@
   if (selSexo) selSexo.addEventListener('change', aplicarSexo);
   aplicarSexo();
 
-  // ── INDEX IGF-1 = igf1_ref_max / igf1 ────────────────────────
+  // ── INDEX IGF-1 = igf1 / igf1_ref_max ────────────────────────
   const inputIgf1    = form.querySelector('[name="igf1"]');
   const inputIgf1Max = form.querySelector('[name="igf1_ref_max"]');
   const inputIgf1Idx = form.querySelector('[name="igf1_index_elevado"]');
@@ -369,8 +369,8 @@
     if (!inputIgf1 || !inputIgf1Max || !inputIgf1Idx) return;
     const val = parseFloat(inputIgf1.value);
     const max = parseFloat(inputIgf1Max.value);
-    if (!isNaN(val) && !isNaN(max) && val !== 0) {
-      inputIgf1Idx.value = (max / val).toFixed(3);
+    if (!isNaN(val) && !isNaN(max) && max !== 0) {
+      inputIgf1Idx.value = (val / max).toFixed(3);
     } else {
       inputIgf1Idx.value = '';
     }

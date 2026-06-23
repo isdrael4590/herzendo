@@ -12,6 +12,7 @@ ALLOWED_HOSTS = os.environ.get('APP_URL', '').split(',') + LOCAL_IPS
 INSTALLED_APPS = [
     'pacientes.apps.PacientesConfig',
     'referencias.apps.ReferenciasConfig',
+    'estadisticas.apps.EstadisticasConfig',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',

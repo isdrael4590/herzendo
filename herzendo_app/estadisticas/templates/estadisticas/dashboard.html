@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dashboard Estadístico — Herzendo</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --sidebar-w: 280px;
+      --num-color: #3b82f6;
+      --cat-color: #10b981;
+      --header-h: 56px;
+    }
+    body { background: #f0f2f5; font-size: .875rem; }
+    /* ── Topbar ── */
+    .topbar {
+      position: fixed; top: 0; left: 0; right: 0; height: var(--header-h);
+      background: #1e3a5f; color: #fff; z-index: 1000;
+      display: flex; align-items: center; gap: 1rem; padding: 0 1.25rem;
+    }
+    .topbar .brand { font-weight: 700; font-size: 1rem; letter-spacing: .5px; }
+    .topbar .sep { opacity: .3; }
+    /* ── Layout ── */
+    .layout {
+      display: flex; margin-top: var(--header-h);
+      height: calc(100vh - var(--header-h));
+    }
+    /* ── Sidebar ── */
+    .sidebar {
+      width: var(--sidebar-w); min-width: var(--sidebar-w);
+      background: #1a2942; color: #c9d6e3;
+      overflow-y: auto; overflow-x: hidden;
+      display: flex; flex-direction: column;
+    }
+    .sidebar-header {
+      padding: .75rem 1rem .5rem;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+    }
+    .sidebar-header .label { font-size: .7rem; text-transform: uppercase; letter-spacing: .8px; opacity: .5; }
+    .sidebar-header .hint { font-size: .75rem; opacity: .6; margin-top: .2rem; }
+    .filter-group { padding: .5rem 1rem; border-bottom: 1px solid rgba(255,255,255,.06); }
+    .filter-group select {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.15);
+      color: #c9d6e3; font-size: .75rem; border-radius: .35rem; padding: .2rem .5rem; width: 100%;
+    }
+    .filter-group select option { background: #1a2942; }
+    .seccion-header {
+      padding: .5rem 1rem .3rem;
+      font-size: .68rem; text-transform: uppercase; letter-spacing: .9px;
+      color: rgba(255,255,255,.35); margin-top: .25rem;
+      display: flex; align-items: center; gap: .4rem; cursor: pointer;
+      user-select: none;
+    }
+    .seccion-header:hover { color: rgba(255,255,255,.6); }
+    .seccion-header .toggle-icon { margin-left: auto; font-size: .6rem; transition: transform .2s; }
+    .seccion-header.collapsed .toggle-icon { transform: rotate(-90deg); }
+    .var-item {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .38rem 1rem .38rem 1.25rem;
+      cursor: pointer; transition: background .15s;
+      border-left: 3px solid transparent;
+    }
+    .var-item:hover { background: rgba(255,255,255,.06); }
+    .var-item.active { background: rgba(59,130,246,.18); border-left-color: var(--num-color); }
+    .var-item.active.cat { border-left-color: var(--cat-color); }
+    .var-type {
+      font-size: .58rem; padding: .1rem .3rem; border-radius: .2rem;
+      font-weight: 700; letter-spacing: .3px; flex-shrink: 0;
+    }
+    .var-type.num { background: rgba(59,130,246,.25); color: #93c5fd; }
+    .var-type.cat { background: rgba(16,185,129,.2); color: #6ee7b7; }
+    .var-label { font-size: .775rem; color: #d1dce8; line-height: 1.2; }
+    .var-item.active .var-label { color: #fff; font-weight: 500; }
+    .selected-count {
+      padding: .5rem 1rem; font-size: .7rem; color: rgba(255,255,255,.4);
+      border-top: 1px solid rgba(255,255,255,.06); margin-top: auto;
+    }
+    /* ── Panel derecho ── */
+    .panel {
+      flex: 1; overflow-y: auto; padding: 1.25rem 1.5rem;
+      display: flex; flex-direction: column; gap: 1rem;
+    }
+    /* ── Cards ── */
+    .stat-card {
+      background: #fff; border-radius: .6rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,.08); padding: 1.25rem 1.5rem;
+    }
+    .stat-card .card-title {
+      font-size: .8rem; font-weight: 700; color: #374151;
+      text-transform: uppercase; letter-spacing: .5px; margin-bottom: 1rem;
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .stat-card .card-title .badge-tipo {
+      font-size: .65rem; padding: .15rem .45rem; border-radius: .25rem;
+      font-weight: 700;
+    }
+    /* ── Descriptivos numéricos ── */
+    .desc-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: .5rem; margin-bottom: 1rem;
+    }
+    .desc-cell {
+      background: #f8fafc; border-radius: .4rem; padding: .6rem .75rem;
+      text-align: center;
+    }
+    .desc-cell .val { font-size: 1.05rem; font-weight: 700; color: #1e3a5f; }
+    .desc-cell .lbl { font-size: .65rem; color: #6b7280; margin-top: .1rem; }
+    /* ── Tabla frecuencias ── */
+    .freq-table th { background: #f1f5f9; font-size: .75rem; }
+    .freq-table td { font-size: .8rem; }
+    .freq-bar-wrap { background: #e5e7eb; border-radius: 2px; height: 6px; }
+    .freq-bar { background: var(--cat-color); height: 6px; border-radius: 2px; }
+    /* ── Tabla bivariada ── */
+    .bivar-header { font-size: .8rem; color: #374151; margin-bottom: .75rem; }
+    .stat-pill {
+      display: inline-flex; align-items: center; gap: .3rem;
+      background: #eff6ff; border: 1px solid #bfdbfe;
+      color: #1d4ed8; border-radius: .4rem;
+      padding: .35rem .75rem; font-size: .78rem; font-weight: 600;
+    }
+    .stat-pill.green { background: #f0fdf4; border-color: #bbf7d0; color: #166534; }
+    /* ── Placeholder ── */
+    .placeholder-panel {
+      flex: 1; display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      color: #9ca3af; gap: 1rem; text-align: center; padding: 3rem;
+    }
+    .placeholder-panel .icon { font-size: 3.5rem; color: #d1d5db; }
+    .placeholder-panel h4 { color: #6b7280; font-size: 1rem; margin: 0; }
+    .placeholder-panel p { font-size: .85rem; max-width: 320px; }
+    /* ── Chart containers ── */
+    .chart-wrap { position: relative; }
+    /* ── Spinner ── */
+    .loading { display: flex; align-items: center; justify-content: center; padding: 3rem; }
+    /* ── Cross-tab ── */
+    .crosstab th, .crosstab td { font-size: .75rem; text-align: center; padding: .3rem .5rem; }
+    .crosstab thead th { background: #eff6ff; }
+    .crosstab .row-header { background: #f0fdf4; font-weight: 600; text-align: left; }
+  </style>
+</head>
+<body>
+
+<!-- Topbar -->
+<div class="topbar">
+  <span class="brand"><i class="bi bi-graph-up-arrow me-2"></i>Dashboard Estadístico</span>
+  <span class="sep">|</span>
+  <span style="opacity:.65; font-size:.8rem;">{{ total_pacientes }} paciente{{ total_pacientes|pluralize }} en base de datos</span>
+  <div class="ms-auto d-flex gap-2">
+    <a href="{% url 'lista' %}" class="btn btn-sm" style="background:rgba(255,255,255,.12);color:#fff;font-size:.75rem;">
+      <i class="bi bi-arrow-left me-1"></i>Volver al registro
+    </a>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- Sidebar: selector de variables -->
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <div class="label"><i class="bi bi-list-check me-1"></i>Variables</div>
+      <div class="hint">Selecciona 1 o 2 variables para analizar</div>
+    </div>
+
+    <div class="filter-group">
+      <select id="filtro-estado" onchange="onFiltroChange()">
+        <option value="todos">Todos los pacientes</option>
+        <option value="completado">Solo completados</option>
+        <option value="pendiente">Solo pendientes</option>
+      </select>
+    </div>
+
+    <div id="var-list">
+      {% for sec in secciones %}
+      <div class="seccion-header" onclick="toggleSeccion('{{ sec.id }}', this)">
+        <i class="bi {{ sec.icon }}"></i>
+        {{ sec.label }}
+        <i class="bi bi-chevron-down toggle-icon"></i>
+      </div>
+      <div id="sec-{{ sec.id }}">
+        {% for v in sec.vars %}
+        <div class="var-item {% if v.tipo == 'categorico' %}cat{% endif %}"
+             data-campo="{{ v.campo }}" data-tipo="{{ v.tipo }}"
+             onclick="toggleVar('{{ v.campo }}', '{{ v.tipo }}')">
+          <span class="var-type {% if v.tipo == 'numerico' %}num{% else %}cat{% endif %}">
+            {% if v.tipo == 'numerico' %}NUM{% else %}CAT{% endif %}
+          </span>
+          <span class="var-label">{{ v.label }}</span>
+        </div>
+        {% endfor %}
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="selected-count" id="sel-count">Ninguna variable seleccionada</div>
+  </div>
+
+  <!-- Panel de resultados -->
+  <div class="panel" id="panel">
+    <div class="placeholder-panel" id="placeholder">
+      <div class="icon"><i class="bi bi-bar-chart-line-fill"></i></div>
+      <h4>Selecciona una variable</h4>
+      <p>Haz clic en cualquier variable del panel izquierdo para ver su análisis estadístico.<br>
+         Selecciona <strong>2 variables</strong> para análisis bivariado.</p>
+      <div class="d-flex gap-2 mt-2">
+        <span class="badge" style="background:#eff6ff;color:#1d4ed8;border:1px solid #bfdbfe;font-weight:600;">
+          <i class="bi bi-hash me-1"></i>NUM = Numérica
+        </span>
+        <span class="badge" style="background:#f0fdf4;color:#166534;border:1px solid #bbf7d0;font-weight:600;">
+          <i class="bi bi-tag me-1"></i>CAT = Categórica
+        </span>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const CSRF = '{{ csrf_token }}';
+let selected = [];   // [{campo, tipo, label}]
+let activeCharts = [];
+let currentFiltro = 'todos';
+
+const PALETTE = [
+  '#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6',
+  '#06b6d4','#ec4899','#84cc16','#f97316','#6366f1',
+];
+
+// ── Variable toggle ────────────────────────────────────────────────────────
+function toggleVar(campo, tipo) {
+  const el = document.querySelector(`[data-campo="${campo}"]`);
+  const idx = selected.findIndex(v => v.campo === campo);
+  if (idx >= 0) {
+    selected.splice(idx, 1);
+    el.classList.remove('active');
+  } else {
+    if (selected.length >= 2) {
+      const old = selected.shift();
+      document.querySelector(`[data-campo="${old.campo}"]`).classList.remove('active');
+    }
+    const label = el.querySelector('.var-label').textContent.trim();
+    selected.push({ campo, tipo, label });
+    el.classList.add('active');
+  }
+  updateSelCount();
+  if (selected.length > 0) analyze();
+  else showPlaceholder();
+}
+
+function onFiltroChange() {
+  currentFiltro = document.getElementById('filtro-estado').value;
+  if (selected.length > 0) analyze();
+}
+
+function toggleSeccion(id, header) {
+  const el = document.getElementById('sec-' + id);
+  const icon = header.querySelector('.toggle-icon');
+  if (el.style.display === 'none') {
+    el.style.display = ''; header.classList.remove('collapsed');
+  } else {
+    el.style.display = 'none'; header.classList.add('collapsed');
+  }
+}
+
+function updateSelCount() {
+  const el = document.getElementById('sel-count');
+  if (!selected.length) { el.textContent = 'Ninguna variable seleccionada'; return; }
+  el.textContent = selected.map(v => v.label).join(' × ');
+}
+
+// ── Análisis AJAX ──────────────────────────────────────────────────────────
+async function analyze() {
+  showLoading();
+  try {
+    const resp = await fetch('/estadisticas/analizar/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ variables: selected.map(v => v.campo), filtro: currentFiltro }),
+    });
+    const data = await resp.json();
+    if (data.error) { showError(data.error); return; }
+    render(data);
+  } catch (e) {
+    showError('Error de conexión: ' + e.message);
+  }
+}
+
+function showLoading() {
+  destroyCharts();
+  document.getElementById('panel').innerHTML =
+    '<div class="loading"><div class="spinner-border text-primary"></div></div>';
+}
+function showPlaceholder() {
+  destroyCharts();
+  document.getElementById('panel').innerHTML = `
+    <div class="placeholder-panel" id="placeholder">
+      <div class="icon"><i class="bi bi-bar-chart-line-fill"></i></div>
+      <h4>Selecciona una variable</h4>
+      <p>Haz clic en cualquier variable del panel izquierdo para ver su análisis estadístico.<br>
+         Selecciona <strong>2 variables</strong> para análisis bivariado.</p>
+    </div>`;
+}
+function showError(msg) {
+  document.getElementById('panel').innerHTML =
+    `<div class="alert alert-danger m-3"><i class="bi bi-exclamation-triangle me-2"></i>${msg}</div>`;
+}
+function destroyCharts() {
+  activeCharts.forEach(c => c.destroy());
+  activeCharts = [];
+}
+
+// ── Render dispatcher ──────────────────────────────────────────────────────
+function render(data) {
+  destroyCharts();
+  const panel = document.getElementById('panel');
+
+  if (data.modo === 'univariado') {
+    panel.innerHTML = data.tipo === 'numerico' ? renderNumerico(data) : renderCategorico(data);
+  } else if (data.modo === 'bivariado') {
+    panel.innerHTML = renderBivariado(data);
+  } else if (data.modo === 'multivariado') {
+    panel.innerHTML = `
+      <div class="stat-card">
+        <div class="card-title"><i class="bi bi-grid-3x3-gap me-1"></i>Resumen multivariado
+          <span class="ms-auto text-muted" style="font-size:.7rem;text-transform:none;font-weight:400;">
+            N = ${data.n_total_bd} pacientes (filtro: ${currentFiltro})
+          </span>
+        </div>
+      </div>
+      ${data.resultados.map(r =>
+        r.tipo === 'numerico' ? renderNumerico({...r, modo:'univariado', n_total_bd: data.n_total_bd})
+                               : renderCategorico({...r, modo:'univariado', n_total_bd: data.n_total_bd})
+      ).join('')}`;
+  }
+
+  // Attach charts after DOM update
+  requestAnimationFrame(() => buildCharts(data));
+}
+
+// ── Numérico ───────────────────────────────────────────────────────────────
+function renderNumerico(d) {
+  if (!d.n) return `<div class="stat-card"><p class="text-muted">Sin datos numéricos para "${d.label}"</p></div>`;
+  const skew = d.skewness !== null && d.skewness !== undefined ? d.skewness : '—';
+  const cv   = d.cv !== null && d.cv !== undefined ? d.cv + '%' : '—';
+  const chartId = 'chart-hist-' + (d.campo || d.label).replace(/[^a-z0-9]/gi, '_');
+  const boxId   = 'chart-box-' + (d.campo || d.label).replace(/[^a-z0-9]/gi, '_');
+  return `
+  <div class="stat-card">
+    <div class="card-title">
+      <span class="badge-tipo" style="background:#eff6ff;color:#1d4ed8">NUM</span>
+      ${d.label}
+      <span class="ms-auto text-muted" style="font-size:.7rem;text-transform:none;font-weight:400;">
+        ${d.seccion || ''} &nbsp;·&nbsp; N total BD = ${d.n_total_bd}
+      </span>
+    </div>
+    <div class="desc-grid">
+      <div class="desc-cell"><div class="val">${d.n}</div><div class="lbl">N válidos</div></div>
+      <div class="desc-cell"><div class="val">${d.n_missing}</div><div class="lbl">Perdidos</div></div>
+      <div class="desc-cell"><div class="val">${d.mean}</div><div class="lbl">Media</div></div>
+      <div class="desc-cell"><div class="val">${d.sd}</div><div class="lbl">DE</div></div>
+      <div class="desc-cell"><div class="val">${cv}</div><div class="lbl">CV%</div></div>
+      <div class="desc-cell"><div class="val">${d.min}</div><div class="lbl">Mínimo</div></div>
+      <div class="desc-cell"><div class="val">${d.q1}</div><div class="lbl">Q1 (P25)</div></div>
+      <div class="desc-cell"><div class="val">${d.median}</div><div class="lbl">Mediana</div></div>
+      <div class="desc-cell"><div class="val">${d.q3}</div><div class="lbl">Q3 (P75)</div></div>
+      <div class="desc-cell"><div class="val">${d.max}</div><div class="lbl">Máximo</div></div>
+      <div class="desc-cell"><div class="val">${d.iqr}</div><div class="lbl">RIC</div></div>
+      <div class="desc-cell"><div class="val">${skew}</div><div class="lbl">Asimetría</div></div>
+    </div>
+    <div class="row g-3 mt-1">
+      <div class="col-md-8">
+        <div style="font-size:.7rem;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;">Histograma</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="${chartId}"></canvas></div>
+      </div>
+      <div class="col-md-4">
+        <div style="font-size:.7rem;color:#6b7280;font-weight:600;text-transform:uppercase;letter-spacing:.5px;margin-bottom:.5rem;">Diagrama de Caja</div>
+        <div class="chart-wrap" style="height:220px"><canvas id="${boxId}"></canvas></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Categórico ─────────────────────────────────────────────────────────────
+function renderCategorico(d) {
+  if (!d.n) return `<div class="stat-card"><p class="text-muted">Sin datos para "${d.label}"</p></div>`;
+  const chartBarId  = 'chart-bar-' + (d.campo || d.label).replace(/[^a-z0-9]/gi, '_');
+  const chartDotId  = 'chart-dou-' + (d.campo || d.label).replace(/[^a-z0-9]/gi, '_');
+  const rows = d.tabla.map(r => `
+    <tr>
+      <td>${r.valor}</td>
+      <td class="text-center fw-semibold">${r.n}</td>
+      <td class="text-center">${r.pct}%</td>
+      <td style="width:120px">
+        <div class="freq-bar-wrap"><div class="freq-bar" style="width:${r.pct}%"></div></div>
+      </td>
+    </tr>`).join('');
+  return `
+  <div class="stat-card">
+    <div class="card-title">
+      <span class="badge-tipo" style="background:#f0fdf4;color:#166534">CAT</span>
+      ${d.label}
+      <span class="ms-auto text-muted" style="font-size:.7rem;text-transform:none;font-weight:400;">
+        ${d.seccion || ''} &nbsp;·&nbsp; N total BD = ${d.n_total_bd}
+      </span>
+    </div>
+    <div class="row g-3 align-items-start">
+      <div class="col-lg-5">
+        <table class="table table-sm freq-table mb-0">
+          <thead><tr><th>Categoría</th><th class="text-center">N</th><th class="text-center">%</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr class="table-light">
+            <td class="fw-semibold">Total válido</td>
+            <td class="text-center fw-semibold">${d.n}</td>
+            <td class="text-center">100%</td><td></td>
+          </tr>
+          ${d.n_missing ? `<tr class="text-muted"><td>Perdidos</td><td class="text-center">${d.n_missing}</td><td></td><td></td></tr>` : ''}
+          </tfoot>
+        </table>
+      </div>
+      <div class="col-lg-4">
+        <div style="font-size:.7rem;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:.5rem;">Barras</div>
+        <div class="chart-wrap" style="height:${Math.max(160, d.tabla.length * 32)}px"><canvas id="${chartBarId}"></canvas></div>
+      </div>
+      <div class="col-lg-3">
+        <div style="font-size:.7rem;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:.5rem;">Distribución</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="${chartDotId}"></canvas></div>
+      </div>
+    </div>
+  </div>`;
+}
+
+// ── Bivariado ──────────────────────────────────────────────────────────────
+function renderBivariado(d) {
+  let html = '';
+  const header = `
+    <div class="stat-card">
+      <div class="card-title"><i class="bi bi-arrows-angle-expand me-1"></i>Análisis bivariado
+        <span class="ms-auto text-muted" style="font-size:.7rem;text-transform:none;font-weight:400;">
+          N total BD = ${d.n_total_bd} &nbsp;·&nbsp; filtro: ${currentFiltro}
+        </span>
+      </div>
+      <div class="bivar-header">
+        <strong>${d.label_x || d.label_num}</strong>
+        <i class="bi bi-x text-muted mx-2"></i>
+        <strong>${d.label_y || d.label_cat}</strong>
+      </div>
+    </div>`;
+
+  if (d.tipo === 'num_num') html = renderNumNum(d);
+  else if (d.tipo === 'num_cat') html = renderNumCat(d);
+  else if (d.tipo === 'cat_cat') html = renderCatCat(d);
+  else html = `<div class="alert alert-warning">${d.error || 'No disponible'}</div>`;
+
+  return header + html;
+}
+
+function renderNumNum(d) {
+  const scatId = 'chart-scat-numnum';
+  const rColor = d.r >= 0 ? '#10b981' : '#ef4444';
+  const rStrength = Math.abs(d.r) >= .7 ? 'Fuerte' : Math.abs(d.r) >= .4 ? 'Moderada' : 'Débil';
+  return `
+  <div class="stat-card">
+    <div class="d-flex gap-3 flex-wrap mb-3">
+      <div class="stat-pill"><i class="bi bi-graph-up"></i> r = ${d.r ?? '—'}</div>
+      <div class="stat-pill"><i class="bi bi-calculator"></i> R² = ${d.r2 ?? '—'}</div>
+      <div class="stat-pill green"><i class="bi bi-info-circle"></i> Correlación ${rStrength}</div>
+      <div class="stat-pill"><i class="bi bi-people"></i> N = ${d.n}</div>
+    </div>
+    <div style="font-size:.7rem;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:.5rem;">Diagrama de dispersión</div>
+    <div class="chart-wrap" style="height:320px"><canvas id="${scatId}"></canvas></div>
+  </div>`;
+}
+
+function renderNumCat(d) {
+  const barId = 'chart-numcat-bar';
+  const rows = d.grupos.map(g => `
+    <tr>
+      <td class="fw-semibold">${g.grupo}</td>
+      <td class="text-center">${g.n}</td>
+      <td class="text-center">${g.mean}</td>
+      <td class="text-center">${g.sd}</td>
+      <td class="text-center">${g.min}</td>
+      <td class="text-center">${g.q1}</td>
+      <td class="text-center">${g.median}</td>
+      <td class="text-center">${g.q3}</td>
+      <td class="text-center">${g.max}</td>
+    </tr>`).join('');
+  return `
+  <div class="stat-card">
+    <div class="stat-pill mb-3"><i class="bi bi-people"></i> N = ${d.n}</div>
+    <table class="table table-sm freq-table mb-3">
+      <thead><tr><th>Grupo</th><th class="text-center">N</th><th class="text-center">Media</th>
+        <th class="text-center">DE</th><th class="text-center">Mín</th><th class="text-center">Q1</th>
+        <th class="text-center">Mediana</th><th class="text-center">Q3</th><th class="text-center">Máx</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>
+    <div style="font-size:.7rem;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:.5rem;">Media por grupo</div>
+    <div class="chart-wrap" style="height:260px"><canvas id="${barId}"></canvas></div>
+  </div>`;
+}
+
+function renderCatCat(d) {
+  const barId = 'chart-catcat-bar';
+  const rows = d.labels1.map((lbl1, i) => {
+    const cells = d.labels2.map((_, j) => `<td class="text-center">${d.matrix[i][j]}</td>`).join('');
+    const total = d.matrix[i].reduce((a,b) => a+b, 0);
+    return `<tr><td class="row-header">${lbl1}</td>${cells}<td class="text-center fw-semibold">${total}</td></tr>`;
+  }).join('');
+  const colTotals = d.labels2.map((_, j) => d.matrix.reduce((s, r) => s + r[j], 0));
+  const total = colTotals.reduce((a,b) => a+b, 0);
+  const cols = d.labels2.map(l => `<th class="text-center">${l}</th>`).join('');
+  const vStrength = d.cramers_v >= .5 ? 'Fuerte' : d.cramers_v >= .3 ? 'Moderada' : 'Débil';
+
+  return `
+  <div class="stat-card">
+    <div class="d-flex gap-3 flex-wrap mb-3">
+      <div class="stat-pill"><i class="bi bi-calculator"></i> χ² = ${d.chi2}</div>
+      <div class="stat-pill"><i class="bi bi-hash"></i> gl = ${d.df}</div>
+      <div class="stat-pill green"><i class="bi bi-bar-chart"></i> V de Cramér = ${d.cramers_v ?? '—'} (${vStrength})</div>
+      <div class="stat-pill"><i class="bi bi-people"></i> N = ${d.n}</div>
+    </div>
+    <div style="font-size:.7rem;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:.5rem;">Tabla de contingencia</div>
+    <div class="table-responsive mb-3">
+      <table class="table table-sm crosstab mb-0">
+        <thead><tr><th></th>${cols}<th class="text-center">Total</th></tr></thead>
+        <tbody>${rows}</tbody>
+        <tfoot><tr class="table-light">
+          <td class="row-header">Total</td>
+          ${colTotals.map(t => `<td class="text-center fw-semibold">${t}</td>`).join('')}
+          <td class="text-center fw-semibold">${total}</td>
+        </tr></tfoot>
+      </table>
+    </div>
+    <div style="font-size:.7rem;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:.5rem;">Distribución por categoría</div>
+    <div class="chart-wrap" style="height:260px"><canvas id="${barId}"></canvas></div>
+  </div>`;
+}
+
+// ── Construir charts ────────────────────────────────────────────────────────
+function buildCharts(data) {
+  if (data.modo === 'univariado') {
+    if (data.tipo === 'numerico') buildNumericoCharts(data);
+    else buildCategoricosCharts(data);
+  } else if (data.modo === 'bivariado') {
+    buildBivariadoCharts(data);
+  } else if (data.modo === 'multivariado') {
+    data.resultados.forEach(r => {
+      if (r.tipo === 'numerico') buildNumericoCharts(r);
+      else buildCategoricosCharts(r);
+    });
+  }
+}
+
+function mkChart(id, config) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const c = new Chart(el, config);
+  activeCharts.push(c);
+}
+
+function buildNumericoCharts(d) {
+  const slug = (d.campo || d.label).replace(/[^a-z0-9]/gi, '_');
+  // Histograma
+  mkChart('chart-hist-' + slug, {
+    type: 'bar',
+    data: {
+      labels: d.hist_labels,
+      datasets: [{ label: d.label, data: d.hist_counts,
+        backgroundColor: 'rgba(59,130,246,.65)', borderColor: '#3b82f6',
+        borderWidth: 1, borderRadius: 3 }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { ticks: { font: { size: 9 }, maxRotation: 45 } },
+        y: { beginAtZero: true, ticks: { font: { size: 10 } }, title: { display: true, text: 'Frecuencia', font: { size: 10 } } }
+      }
+    }
+  });
+  // Box plot (simulated with floating bars)
+  const [min, q1, med, q3, max] = d.box;
+  mkChart('chart-box-' + slug, {
+    type: 'bar',
+    data: {
+      labels: [d.label],
+      datasets: [
+        { label: 'Mín–Q1', data: [[min, q1]], backgroundColor: 'rgba(59,130,246,.15)', borderColor: '#93c5fd', borderWidth: 1 },
+        { label: 'Q1–Q3', data: [[q1, q3]], backgroundColor: 'rgba(59,130,246,.45)', borderColor: '#3b82f6', borderWidth: 2 },
+        { label: 'Q3–Máx', data: [[q3, max]], backgroundColor: 'rgba(59,130,246,.15)', borderColor: '#93c5fd', borderWidth: 1 },
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, indexAxis: 'y',
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const labels = ['Rango inferior (Mín–Q1)','Caja (Q1–Q3)','Rango superior (Q3–Máx)'];
+          return `${labels[ctx.datasetIndex]}: ${ctx.raw[0]} – ${ctx.raw[1]}`;
+        }}},
+        annotation: {}
+      },
+      scales: {
+        x: { stacked: false, ticks: { font: { size: 9 } } },
+        y: { stacked: true, ticks: { display: false } }
+      }
+    }
+  });
+}
+
+function buildCategoricosCharts(d) {
+  const slug = (d.campo || d.label).replace(/[^a-z0-9]/gi, '_');
+  const colors = d.chart_labels.map((_, i) => PALETTE[i % PALETTE.length]);
+  const alphas = colors.map(c => c + 'bb');
+  // Horizontal bar
+  mkChart('chart-bar-' + slug, {
+    type: 'bar',
+    data: {
+      labels: d.chart_labels,
+      datasets: [{ data: d.chart_values, backgroundColor: alphas, borderColor: colors, borderWidth: 1, borderRadius: 3 }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { font: { size: 10 } } },
+        y: { ticks: { font: { size: 10 } } }
+      }
+    }
+  });
+  // Doughnut
+  mkChart('chart-dou-' + slug, {
+    type: 'doughnut',
+    data: { labels: d.chart_labels, datasets: [{ data: d.chart_values, backgroundColor: colors, borderWidth: 2 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10, padding: 6 } } }
+    }
+  });
+}
+
+function buildBivariadoCharts(data) {
+  if (data.tipo === 'num_num') {
+    mkChart('chart-scat-numnum', {
+      type: 'scatter',
+      data: { datasets: [{ label: `${data.label_x} × ${data.label_y}`,
+        data: data.scatter, backgroundColor: 'rgba(59,130,246,.5)', pointRadius: 4 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { title: { display: true, text: data.label_x, font: { size: 10 } }, ticks: { font: { size: 9 } } },
+          y: { title: { display: true, text: data.label_y, font: { size: 10 } }, ticks: { font: { size: 9 } } }
+        }
+      }
+    });
+  } else if (data.tipo === 'num_cat') {
+    const colors = data.chart_labels.map((_, i) => PALETTE[i % PALETTE.length]);
+    mkChart('chart-numcat-bar', {
+      type: 'bar',
+      data: {
+        labels: data.chart_labels,
+        datasets: [{
+          label: 'Media', data: data.chart_means,
+          backgroundColor: colors.map(c => c + 'aa'), borderColor: colors, borderWidth: 1.5, borderRadius: 4,
+          error: data.chart_sd,
+        }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: false, ticks: { font: { size: 10 } }, title: { display: true, text: 'Media ± DE', font: { size: 10 } } },
+          x: { ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+  } else if (data.tipo === 'cat_cat') {
+    const datasets = data.labels1.map((lbl, i) => ({
+      label: lbl, data: data.matrix[i],
+      backgroundColor: PALETTE[i % PALETTE.length] + 'aa',
+      borderColor: PALETTE[i % PALETTE.length], borderWidth: 1, borderRadius: 3,
+    }));
+    mkChart('chart-catcat-bar', {
+      type: 'bar',
+      data: { labels: data.labels2, datasets },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { font: { size: 9 }, boxWidth: 10 } } },
+        scales: {
+          x: { ticks: { font: { size: 10 } } },
+          y: { beginAtZero: true, ticks: { font: { size: 10 } } }
+        }
+      }
+    });
+  }
+}
+</script>
+</body>
+</html>

@@ -19,6 +19,8 @@
             <th>Nombre completo</th>
             <th>Correo</th>
             <th>Rol</th>
+            <th class="text-center">Codificado</th>
+            <th class="text-center">Estadísticas</th>
             <th>Estado</th>
             <th class="text-center">Acciones</th>
           </tr>
@@ -45,6 +47,16 @@
                   <span class="badge bg-light text-muted">Sin rol</span>
                 {% endfor %}
               {% endif %}
+            </td>
+            <td class="text-center">
+              {% for g in u.groups.all %}{% if g.name == 'ver_codificado' %}
+                <i class="bi bi-check-circle-fill text-primary" title="Tiene acceso"></i>
+              {% endif %}{% endfor %}
+            </td>
+            <td class="text-center">
+              {% for g in u.groups.all %}{% if g.name == 'estadisticas' %}
+                <i class="bi bi-check-circle-fill text-success" title="Tiene acceso"></i>
+              {% endif %}{% endfor %}
             </td>
             <td>
               {% if u.is_active %}

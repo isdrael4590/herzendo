@@ -29,9 +29,9 @@ class PacienteForm(forms.ModelForm):
             # Generales
             'nombre':              forms.TextInput(attrs=_txt),
             'hcu':                 forms.TextInput(attrs=_txt),
-            'fecha_nacimiento':    forms.DateInput(attrs=_dat),
+            'fecha_nacimiento':    forms.DateInput(attrs=_dat, format='%Y-%m-%d'),
             'edad_diagnostico':    forms.NumberInput(attrs=_num),
-            'fecha_procedimiento': forms.DateInput(attrs=_dat),
+            'fecha_procedimiento': forms.DateInput(attrs=_dat, format='%Y-%m-%d'),
             'sexo':                forms.Select(attrs=_sel),
             'procedimiento':       forms.TextInput(attrs=_txt),
             'cirujano':            forms.TextInput(attrs=_txt),

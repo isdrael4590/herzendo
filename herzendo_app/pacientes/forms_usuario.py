@@ -10,13 +10,15 @@ ROLES = [
 
 
 class UsuarioCrearForm(forms.Form):
-    username   = forms.CharField(max_length=150)
-    first_name = forms.CharField(max_length=150, required=False)
-    last_name  = forms.CharField(max_length=150, required=False)
-    email      = forms.EmailField(required=False)
-    rol        = forms.ChoiceField(choices=ROLES)
-    password1  = forms.CharField(widget=forms.PasswordInput, min_length=8)
-    password2  = forms.CharField(widget=forms.PasswordInput)
+    username         = forms.CharField(max_length=150)
+    first_name       = forms.CharField(max_length=150, required=False)
+    last_name        = forms.CharField(max_length=150, required=False)
+    email            = forms.EmailField(required=False)
+    rol              = forms.ChoiceField(choices=ROLES)
+    ver_codificado   = forms.BooleanField(required=False, label='Acceso a datos codificados')
+    ver_estadisticas = forms.BooleanField(required=False, label='Acceso a estadísticas')
+    password1        = forms.CharField(widget=forms.PasswordInput, min_length=8)
+    password2        = forms.CharField(widget=forms.PasswordInput)
 
     def clean_username(self):
         u = self.cleaned_data['username']
@@ -32,14 +34,16 @@ class UsuarioCrearForm(forms.Form):
 
 
 class UsuarioEditarForm(forms.Form):
-    username   = forms.CharField(max_length=150)
-    first_name = forms.CharField(max_length=150, required=False)
-    last_name  = forms.CharField(max_length=150, required=False)
-    email      = forms.EmailField(required=False)
-    rol        = forms.ChoiceField(choices=ROLES)
-    is_active  = forms.BooleanField(required=False, initial=True)
-    password1  = forms.CharField(widget=forms.PasswordInput, required=False, min_length=8)
-    password2  = forms.CharField(widget=forms.PasswordInput, required=False)
+    username         = forms.CharField(max_length=150)
+    first_name       = forms.CharField(max_length=150, required=False)
+    last_name        = forms.CharField(max_length=150, required=False)
+    email            = forms.EmailField(required=False)
+    rol              = forms.ChoiceField(choices=ROLES)
+    ver_codificado   = forms.BooleanField(required=False, label='Acceso a datos codificados')
+    ver_estadisticas = forms.BooleanField(required=False, label='Acceso a estadísticas')
+    is_active        = forms.BooleanField(required=False, initial=True)
+    password1        = forms.CharField(widget=forms.PasswordInput, required=False, min_length=8)
+    password2        = forms.CharField(widget=forms.PasswordInput, required=False)
 
     def __init__(self, *args, usuario=None, **kwargs):
         super().__init__(*args, **kwargs)

@@ -65,6 +65,34 @@
         {% for e in form.rol.errors %}<div class="invalid-feedback">{{ e }}</div>{% endfor %}
       </div>
 
+      <div class="mb-3">
+        <div class="card border-primary" style="background:#f0f7ff;">
+          <div class="card-body py-2 px-3">
+            <div class="form-check mb-0">
+              <input type="checkbox" class="form-check-input" name="ver_codificado" id="ver_codificado"
+                     {% if form.ver_codificado.value %}checked{% endif %}>
+              <label class="form-check-label fw-semibold" for="ver_codificado">
+                <i class="bi bi-123 me-1 text-primary"></i>Acceso a datos codificados
+              </label>
+            </div>
+            <div class="text-muted" style="font-size:.75rem; margin-top:.2rem; padding-left:1.5rem;">
+              Permite ver y descargar la base de datos con variables codificadas numéricamente.
+            </div>
+          </div>
+          <hr class="my-2">
+          <div class="form-check mb-0">
+            <input type="checkbox" class="form-check-input" name="ver_estadisticas" id="ver_estadisticas"
+                   {% if form.ver_estadisticas.value %}checked{% endif %}>
+            <label class="form-check-label fw-semibold" for="ver_estadisticas">
+              <i class="bi bi-graph-up-arrow me-1 text-primary"></i>Acceso a estadísticas
+            </label>
+          </div>
+          <div class="text-muted" style="font-size:.75rem; margin-top:.2rem; padding-left:1.5rem;">
+            Permite acceder al dashboard estadístico con análisis uni y bivariado.
+          </div>
+        </div>
+      </div>
+
       {% if not es_edicion %}
       <div class="mb-3">
         <label class="form-label fw-semibold">Contraseña <span class="text-danger">*</span></label>

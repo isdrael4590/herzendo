@@ -1,14 +1,27 @@
+import csv
+import io
 import json
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
+from datetime import datetime
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponse
 from functools import wraps
 from .models import ValorReferencia, HORMONA_CHOICES
 from .forms import ValorReferenciaForm
 from . import excel_importer
+
+HORMONA_VALORES = {label.lower(): val for val, label in HORMONA_CHOICES}
+HORMONA_VALORES.update({val.lower(): val for val, label in HORMONA_CHOICES})
+
+CSV_COLUMNAS = [
+    'hormona', 'version', 'grupo_clinico', 'tipo_muestra',
+    'unidad', 'ref_min', 'ref_max',
+    'unidad2', 'ref_min2', 'ref_max2',
+    'intervalo_min', 'intervalo_max', 'observaciones',
+]
 
 
 def role_required(*grupos):
@@ -23,6 +36,18 @@ def role_required(*grupos):
             raise PermissionDenied
         return wrapped
     return decorator
+
+
+def superuser_required(view_func):
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            from django.contrib.auth.views import redirect_to_login
+            return redirect_to_login(request.get_full_path())
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+    return wrapped
 
 
 @login_required
@@ -91,7 +116,7 @@ def api_hormona(request, hormona):
     return JsonResponse({'grupos': data})
 
 
-@role_required('administrador', 'medico')
+@superuser_required
 def importar_excel(request):
     if request.method == 'POST':
         archivo = request.FILES.get('archivo')
@@ -122,6 +147,108 @@ def importar_excel(request):
         })
 
     return render(request, 'referencias/importar_excel.html', {})
+
+
+@role_required('administrador')
+def exportar_csv(request):
+    fecha = datetime.now().strftime('%Y%m%d_%H%M')
+    resp = HttpResponse(content_type='text/csv; charset=utf-8')
+    resp['Content-Disposition'] = f'attachment; filename="referencias_{fecha}.csv"'
+    resp.write('﻿')
+    writer = csv.writer(resp)
+    writer.writerow(CSV_COLUMNAS)
+    for vr in ValorReferencia.objects.all():
+        writer.writerow([
+            vr.hormona, vr.version, vr.grupo_clinico, vr.tipo_muestra,
+            vr.unidad, vr.ref_min or '', vr.ref_max or '',
+            vr.unidad2, vr.ref_min2 or '', vr.ref_max2 or '',
+            vr.intervalo_min or '', vr.intervalo_max or '', vr.observaciones,
+        ])
+    return resp
+
+
+@superuser_required
+def importar_csv(request):
+    if request.method == 'GET':
+        return render(request, 'referencias/importar_csv.html')
+
+    archivo = request.FILES.get('csv_file')
+    if not archivo:
+        messages.error(request, 'No se seleccionó ningún archivo.')
+        return render(request, 'referencias/importar_csv.html')
+    if not archivo.name.lower().endswith('.csv'):
+        messages.error(request, 'El archivo debe tener extensión .csv')
+        return render(request, 'referencias/importar_csv.html')
+
+    try:
+        contenido = archivo.read().decode('utf-8-sig')
+    except UnicodeDecodeError:
+        archivo.seek(0)
+        contenido = archivo.read().decode('latin-1')
+
+    modo = request.POST.get('modo', 'crear')
+    if modo == 'reemplazar':
+        ValorReferencia.objects.all().delete()
+
+    def _dec(val):
+        val = str(val).strip().replace(',', '.')
+        if not val:
+            return None
+        try:
+            return Decimal(val)
+        except InvalidOperation:
+            return None
+
+    reader = csv.DictReader(io.StringIO(contenido))
+    creados = actualizados = omitidos = 0
+    errores = []
+
+    for i, row in enumerate(reader, start=2):
+        hormona = row.get('hormona', '').strip().lower()
+        hormona = HORMONA_VALORES.get(hormona, '')
+        version = row.get('version', '').strip()
+        if not hormona or not version:
+            errores.append((i, 'hormona y version son obligatorios'))
+            continue
+
+        grupo_clinico = row.get('grupo_clinico', '').strip()
+        defaults = {
+            'tipo_muestra':  row.get('tipo_muestra', '').strip(),
+            'unidad':        row.get('unidad', '').strip(),
+            'ref_min':       _dec(row.get('ref_min', '')),
+            'ref_max':       _dec(row.get('ref_max', '')),
+            'unidad2':       row.get('unidad2', '').strip(),
+            'ref_min2':      _dec(row.get('ref_min2', '')),
+            'ref_max2':      _dec(row.get('ref_max2', '')),
+            'intervalo_min': _dec(row.get('intervalo_min', '')),
+            'intervalo_max': _dec(row.get('intervalo_max', '')),
+            'observaciones': row.get('observaciones', '').strip(),
+        }
+        try:
+            if modo == 'crear':
+                _, created = ValorReferencia.objects.get_or_create(
+                    hormona=hormona, version=version, grupo_clinico=grupo_clinico,
+                    defaults=defaults,
+                )
+                if created:
+                    creados += 1
+                else:
+                    omitidos += 1
+            else:
+                _, created = ValorReferencia.objects.update_or_create(
+                    hormona=hormona, version=version, grupo_clinico=grupo_clinico,
+                    defaults=defaults,
+                )
+                if created:
+                    creados += 1
+                else:
+                    actualizados += 1
+        except Exception as e:
+            errores.append((i, str(e)))
+
+    resultado = {'creados': creados, 'actualizados': actualizados,
+                 'omitidos': omitidos, 'errores': errores}
+    return render(request, 'referencias/importar_csv.html', {'resultado': resultado})
 
 
 @role_required('administrador')

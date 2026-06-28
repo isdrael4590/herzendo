@@ -135,6 +135,20 @@
     <span class="field-value">{{ paciente.detalle_sindrome }}</span>
   </div>
   {% endif %}
+  <div class="field-row">
+    <span class="field-label">Diagnóstico</span>
+    {% with labels=paciente.get_diagnostico_labels %}
+    {% if labels %}
+      <span class="field-value">
+        {% for label in labels %}
+          <span class="interp-badge badge-si">{{ label }}</span>{% if not forloop.last %}&nbsp;{% endif %}
+        {% endfor %}
+      </span>
+    {% else %}
+      <span class="field-value empty"><em>Sin Diagnóstico</em></span>
+    {% endif %}
+    {% endwith %}
+  </div>
 
   <!-- ── EJE SOMATOTROPO ──────────────────────────────────────────── -->
   <div class="section-title">Eje Somatotropo</div>

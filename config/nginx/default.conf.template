@@ -18,6 +18,9 @@ server{
     location / {
         include /etc/nginx/uwsgi_params;
         uwsgi_pass uwsgi_app;
+               # Permitir que Nginx envíe respuestas y peticiones grandes a uWSGI
+        uwsgi_buffer_size 32k;
+        uwsgi_buffers 8 32k;
     }
     location /static/ {
         alias /home/herzendo_app/herzendo/staticfiles/;

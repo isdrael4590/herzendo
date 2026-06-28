@@ -1,5 +1,5 @@
 from django import forms
-from .models import Paciente, HORMONAS_IHQ
+from .models import Paciente, HORMONAS_IHQ, DIAGNOSTICO_TIPOS
 
 _num = {'class': 'form-control form-control-sm', 'step': 'any'}
 _sel = {'class': 'form-select form-select-sm'}
@@ -18,6 +18,14 @@ class PacienteForm(forms.ModelForm):
     hormonas_ihq = forms.MultipleChoiceField(
         label='Hormonas IHQ',
         choices=HORMONAS_IHQ,
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    # Campo múltiple para diagnóstico — se guarda como CSV en el modelo
+    diagnostico = forms.MultipleChoiceField(
+        label='Diagnóstico',
+        choices=DIAGNOSTICO_TIPOS,
         required=False,
         widget=forms.CheckboxSelectMultiple,
     )
@@ -133,8 +141,15 @@ class PacienteForm(forms.ModelForm):
             self.initial['hormonas_ihq'] = [
                 v.strip() for v in self.instance.hormonas_ihq.split(',') if v.strip()
             ]
+        if self.instance and self.instance.diagnostico:
+            self.initial['diagnostico'] = [
+                v.strip() for v in self.instance.diagnostico.split(',') if v.strip()
+            ]
 
     def clean_hormonas_ihq(self):
-        # Convertir lista seleccionada → CSV para guardar en el modelo
         valores = self.cleaned_data.get('hormonas_ihq') or []
+        return ','.join(valores)
+
+    def clean_diagnostico(self):
+        valores = self.cleaned_data.get('diagnostico') or []
         return ','.join(valores)

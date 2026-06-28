@@ -10,4 +10,6 @@ urlpatterns = [
     path('<int:pk>/eliminar/',     views.eliminar,    name='eliminar'),
     path('api/<str:hormona>/',     views.api_hormona,    name='api_hormona'),
     path('importar/',              views.importar_excel, name='importar_excel'),
+    path('exportar/csv/',          views.exportar_csv,   name='exportar_csv'),
+    path('importar/csv/',          views.importar_csv,   name='importar_csv'),
 ]

@@ -8,46 +8,46 @@ WORKDIR /herzendo
 COPY ./requirements.txt /herzendo
 RUN apk add --no-cache --virtual .build-deps \
       build-base \ 
-      cairo-dev=~1 \
-      freetype-dev=~2 \
-      gdk-pixbuf-dev=~2 \
-      harfbuzz-dev=~12 \
-      jbig2dec-dev=~0 \
-      jpeg-dev=~9f \
-      lcms2-dev=~2 \
-      libffi-dev=~3 \
-      libxml2-dev=~2 \
-      libxslt-dev=~1 \
-      mariadb-dev=~11 \
-      mupdf-dev=~1 \
-      musl-dev=~1 \
+      cairo-dev \
+      freetype-dev \
+      gdk-pixbuf-dev \
+      harfbuzz-dev \
+      jbig2dec-dev \
+      jpeg-dev \
+      lcms2-dev \
+      libffi-dev \
+      libxml2-dev \
+      libxslt-dev \
+      mariadb-dev \
+      mupdf-dev \
+      musl-dev \
       openjpeg-dev \
-      pango-dev=~1 \
-      pkgconf=~2 \
-      zlib-dev=~1 && \  
+      pango-dev \
+      pkgconf \
+      zlib-dev && \  
     pip install --no-cache-dir -r requirements.txt && \
     apk del .build-deps
 
 FROM --platform=$BUILDPLATFORM python:3.14-alpine AS base
 WORKDIR /home/herzendo_app/
 RUN apk add --no-cache \ 
-      ca-certificates=~20260413 \
-      cairo=~1 \
-      curl=~8 \
-      font-liberation=~2 \
-      font-opensans=~0 \
-      fontconfig=~2 \
-      freetype=~2 \
-      gdk-pixbuf=~2 \
-      harfbuzz-dev=~12 \
+      ca-certificates \
+      cairo \
+      curl \
+      font-liberation \
+      font-opensans \
+      fontconfig \
+      freetype \
+      gdk-pixbuf \
+      harfbuzz-dev \
       gumbo-parser-dev \
-      jpeg=~9f \
-      libffi=~3 \
-      libxml2=~2 \
-      libxslt=~1 \
-      mariadb-connector-c-dev=~3 \
-      weasyprint=~66 \
-      zlib~=1 && \
+      jpeg \
+      libffi \
+      libxml2 \
+      libxslt \
+      mariadb-connector-c-dev \
+      weasyprint \
+      zlib && \
       update-ca-certificates
 
 RUN adduser -S -G www-data www-data

@@ -181,6 +181,13 @@
       </div>
       <div id="sec-{{ sec.id }}">
         {% for v in sec.vars %}
+        {% if v.tipo == 'resumen_tipos' %}
+        <div class="var-item" data-campo="{{ v.campo }}" data-tipo="resumen_tipos"
+             onclick="runResumenTipos('{{ v.campo }}')">
+          <span class="var-type" style="background:rgba(251,191,36,.25);color:#fbbf24;">RES</span>
+          <span class="var-label">{{ v.label }}</span>
+        </div>
+        {% else %}
         <div class="var-item {% if v.tipo == 'categorico' %}cat{% endif %}"
              data-campo="{{ v.campo }}" data-tipo="{{ v.tipo }}"
              onclick="toggleVar('{{ v.campo }}', '{{ v.tipo }}')">
@@ -189,6 +196,7 @@
           </span>
           <span class="var-label">{{ v.label }}</span>
         </div>
+        {% endif %}
         {% endfor %}
       </div>
       {% endfor %}
@@ -271,6 +279,78 @@ function updateSelCount() {
   el.textContent = selected.map(v => v.label).join(' × ');
 }
 
+// ── Resumen tipos (acción especial, no entra en selected[]) ───────────────
+let activeResumenCampo = null;
+
+async function runResumenTipos(campo) {
+  // Deseleccionar vars normales y marcar este item
+  selected.forEach(v => {
+    const el = document.querySelector(`[data-campo="${v.campo}"]`);
+    if (el) el.classList.remove('active');
+  });
+  selected = [];
+  document.querySelectorAll('[data-tipo="resumen_tipos"]').forEach(el => el.classList.remove('active'));
+  document.querySelector(`[data-campo="${campo}"]`).classList.add('active');
+  activeResumenCampo = campo;
+  updateSelCount();
+  showLoading();
+  try {
+    const resp = await fetch('/estadisticas/analizar/', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+      body: JSON.stringify({ variables: [campo], filtro: currentFiltro }),
+    });
+    const data = await resp.json();
+    if (data.error) { showError(data.error); return; }
+    render(data);
+  } catch (e) {
+    showError('Error de conexión: ' + e.message);
+  }
+}
+
+function renderResumenTipos(d) {
+  const chartId = 'chart-resumen-tipos';
+  const maxCount = Math.max(...d.counts, 1);
+  const rows = d.labels.map((lbl, i) => `
+    <tr>
+      <td class="fw-semibold">${lbl}</td>
+      <td class="text-center fw-semibold">${d.counts[i]}</td>
+      <td class="text-center">${d.pcts[i]}%</td>
+      <td style="width:140px">
+        <div class="freq-bar-wrap">
+          <div class="freq-bar" style="width:${d.counts[i]/maxCount*100}%;background:#f59e0b"></div>
+        </div>
+      </td>
+    </tr>`).join('');
+  return `
+  <div class="stat-card">
+    <div class="card-title">
+      <span class="badge-tipo" style="background:rgba(251,191,36,.2);color:#d97706">RES</span>
+      Diagnóstico por tipo
+      <span class="ms-auto text-muted" style="font-size:.7rem;text-transform:none;font-weight:400;">
+        N total BD = ${d.n_total_bd} &nbsp;·&nbsp; un paciente puede tener varios tipos
+      </span>
+    </div>
+    <div class="row g-3 align-items-start">
+      <div class="col-lg-5">
+        <table class="table table-sm freq-table mb-0">
+          <thead><tr><th>Tipo de diagnóstico</th><th class="text-center">N</th><th class="text-center">%</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+          <tfoot><tr class="table-light text-muted">
+            <td colspan="4" style="font-size:.72rem;">
+              % calculado sobre ${d.n_total_bd} pacientes totales. Un paciente puede tener más de un tipo.
+            </td>
+          </tr></tfoot>
+        </table>
+      </div>
+      <div class="col-lg-7">
+        <div style="font-size:.7rem;color:#6b7280;font-weight:600;text-transform:uppercase;margin-bottom:.5rem;">Pacientes por tipo de diagnóstico</div>
+        <div class="chart-wrap" style="height:200px"><canvas id="${chartId}"></canvas></div>
+      </div>
+    </div>
+  </div>`;
+}
+
 // ── Análisis AJAX ──────────────────────────────────────────────────────────
 async function analyze() {
   showLoading();
@@ -317,7 +397,9 @@ function render(data) {
   destroyCharts();
   const panel = document.getElementById('panel');
 
-  if (data.modo === 'univariado') {
+  if (data.modo === 'resumen_tipos') {
+    panel.innerHTML = renderResumenTipos(data);
+  } else if (data.modo === 'univariado') {
     panel.innerHTML = data.tipo === 'numerico' ? renderNumerico(data) : renderCategorico(data);
   } else if (data.modo === 'bivariado') {
     panel.innerHTML = renderBivariado(data);
@@ -541,7 +623,28 @@ function renderCatCat(d) {
 
 // ── Construir charts ────────────────────────────────────────────────────────
 function buildCharts(data) {
-  if (data.modo === 'univariado') {
+  if (data.modo === 'resumen_tipos') {
+    mkChart('chart-resumen-tipos', {
+      type: 'bar',
+      data: {
+        labels: data.labels,
+        datasets: [{
+          label: 'Pacientes',
+          data: data.counts,
+          backgroundColor: ['#3b82f6','#10b981','#f59e0b'],
+          borderRadius: 5,
+        }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false } },
+        scales: {
+          y: { beginAtZero: true, ticks: { stepSize: 1 } },
+          x: { ticks: { font: { size: 11 } } },
+        },
+      },
+    });
+  } else if (data.modo === 'univariado') {
     if (data.tipo === 'numerico') buildNumericoCharts(data);
     else buildCategoricosCharts(data);
   } else if (data.modo === 'bivariado') {

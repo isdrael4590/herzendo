@@ -19,6 +19,11 @@ HORMONAS_IHQ = [
     ('fsh_lh', 'FSH/LH+'),
     ('tsh',    'TSH+'),
 ]
+DIAGNOSTICO_TIPOS = [
+    ('clinico',           'Clínico'),
+    ('bioquimico',        'Bioquímico'),
+    ('anatomopatologico', 'Anatomopatológico'),
+]
 PROVINCIAS = [
     ('', '—'),
     ('Azuay', 'Azuay'),
@@ -118,6 +123,8 @@ class Paciente(models.Model):
     etnia               = models.CharField(max_length=20, choices=ETNIA, blank=True)
     antecedentes_fam    = models.CharField('Antecedentes familiares tumores hipofisarios', **_c(SI_NO))
     detalle_sindrome    = models.TextField('Detalle del síndrome', blank=True)
+    diagnostico         = models.CharField('Diagnóstico', max_length=60, blank=True,
+                            help_text='Valores separados por coma: clinico,bioquimico,anatomopatologico')
 
     # ── Eje Somatotropo ───────────────────────────────────────────────────────
     gh                  = models.DecimalField('GH', **_d())
@@ -352,3 +359,7 @@ class Paciente(models.Model):
             else:
                 self.tamano_tumor_interp = 'gigante'
         super().save(*args, **kwargs)
+
+    def get_diagnostico_labels(self):
+        label_map = dict(DIAGNOSTICO_TIPOS)
+        return [label_map[v] for v in self.diagnostico.split(',') if v.strip() in label_map]

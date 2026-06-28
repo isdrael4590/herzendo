@@ -29,6 +29,18 @@ def role_required(*grupos):
     return decorator
 
 
+def superuser_required(view_func):
+    @wraps(view_func)
+    def wrapped(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            from django.contrib.auth.views import redirect_to_login
+            return redirect_to_login(request.get_full_path())
+        if request.user.is_superuser:
+            return view_func(request, *args, **kwargs)
+        raise PermissionDenied
+    return wrapped
+
+
 @login_required
 def lista(request):
     q = request.GET.get('q', '')
@@ -429,7 +441,7 @@ def plantilla_csv(request):
     return resp
 
 
-@role_required('administrador', 'medico')
+@superuser_required
 def importar_csv(request):
     import csv
     import io
@@ -636,7 +648,7 @@ def importar_csv(request):
     return redirect('lista')
 
 
-@role_required('administrador', 'medico')
+@superuser_required
 def importar_excel(request):
     if request.method == 'GET':
         return render(request, 'pacientes/importar_excel.html')
@@ -1093,6 +1105,9 @@ LIBRO_CODIGOS = [
         5:'Montubio', 6:'Otro', 7:'No dato',
     }),
     ('Antec. familiares',     'antecedentes_fam',     {1: 'Sí', 2: 'No'}),
+    ('Diagnóstico Clínico',   'diagnostico_clinico',  {0: 'No', 1: 'Sí'}),
+    ('Diagnóstico Bioquímico','diagnostico_bioquimico',{0: 'No', 1: 'Sí'}),
+    ('Diagnóstico Anatomopat.','diagnostico_anatomopat',{0: 'No', 1: 'Sí'}),
     ('Estado',                'estado',               {0: 'Pendiente', 1: 'Completado'}),
     ('GH / Interpretación',   'gh_interp',            {1:'Normal', 2:'Elevado', 3:'Bajo', 4:'No determinado'}),
     ('IGF-1 / Interpretación','igf1_interp',          {1:'Normal', 2:'Elevado', 3:'Bajo', 4:'No determinado'}),
@@ -1152,6 +1167,9 @@ _COLUMNAS_COD = [
     ('nivel_instruccion',       lambda p: _CODIGOS['nivel_instruccion'].get(p.nivel_instruccion, '')),
     ('etnia',                   lambda p: _CODIGOS['etnia'].get(p.etnia, '')),
     ('antecedentes_fam',        lambda p: _CODIGOS['antecedentes_fam'].get(p.antecedentes_fam, '')),
+    ('diagnostico_clinico',     lambda p: 1 if 'clinico' in (p.diagnostico or '').split(',') else 0),
+    ('diagnostico_bioquimico',  lambda p: 1 if 'bioquimico' in (p.diagnostico or '').split(',') else 0),
+    ('diagnostico_anatomopat',  lambda p: 1 if 'anatomopatologico' in (p.diagnostico or '').split(',') else 0),
     ('estado',                  lambda p: _CODIGOS['estado'].get(p.estado, '')),
     ('gh',                      lambda p: float(p.gh) if p.gh is not None else ''),
     ('gh_ref_min',              lambda p: float(p.gh_ref_min) if p.gh_ref_min is not None else ''),

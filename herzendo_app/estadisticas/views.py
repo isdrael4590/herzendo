@@ -62,8 +62,50 @@ def analizar(request):
     if n_total == 0:
         return JsonResponse({'error': 'No hay pacientes con ese filtro'}, status=200)
 
+    # ── Resumen agrupado por tipo de diagnóstico ──────────────────────────────
+    if len(campos) == 1 and CATALOGO[campos[0]].get('tipo') == 'resumen_tipos':
+        meta = CATALOGO[campos[0]]
+        all_diag = list(qs.values_list('diagnostico', flat=True))
+        tipos = meta['tipos']
+        counts = [
+            sum(1 for v in all_diag if t in (v or '').split(','))
+            for t, _ in tipos
+        ]
+        labels = [lbl for _, lbl in tipos]
+        pcts = [round(c / n_total * 100, 1) if n_total else 0 for c in counts]
+        return JsonResponse({
+            'modo': 'resumen_tipos',
+            'label': meta['label'],
+            'n_total_bd': n_total,
+            'labels': labels,
+            'counts': counts,
+            'pcts': pcts,
+        })
+
     def _valores(campo):
-        return list(qs.values_list(campo, flat=True))
+        meta = CATALOGO[campo]
+        db_campo = meta.get('source_campo', campo)
+        raw = list(qs.values_list(db_campo, flat=True))
+
+        if meta.get('multivalue_extract'):
+            target = meta['multivalue_extract']
+            return ['si' if target in (v or '').split(',') else 'no' for v in raw]
+
+        if meta.get('multivalue'):
+            choices = meta.get('choices', [])
+            label_map = dict(choices)
+            orden = [val for val, _ in choices]
+            result = []
+            for v in raw:
+                if v:
+                    vals = {x.strip() for x in v.split(',') if x.strip()}
+                    partes = [label_map[k] for k in orden if k in vals]
+                    result.append(' + '.join(partes))
+                else:
+                    result.append('')
+            return result
+
+        return raw
 
     # ── Univariado ────────────────────────────────────────────────────────────
     if len(campos) == 1:
@@ -74,7 +116,8 @@ def analizar(request):
         if meta['tipo'] == 'numerico':
             resultado = S.describe_numeric(vals)
         else:
-            resultado = S.describe_categorical(vals, choices=meta.get('choices'))
+            choices = None if meta.get('no_choices_filter') else meta.get('choices')
+            resultado = S.describe_categorical(vals, choices=choices)
 
         resultado['label'] = meta['label']
         resultado['seccion'] = meta['seccion']
@@ -118,7 +161,8 @@ def analizar(request):
         if meta['tipo'] == 'numerico':
             r = S.describe_numeric(vals)
         else:
-            r = S.describe_categorical(vals, choices=meta.get('choices'))
+            choices = None if meta.get('no_choices_filter') else meta.get('choices')
+            r = S.describe_categorical(vals, choices=choices)
         r['label'] = meta['label']
         r['campo'] = campo
         resultados.append(r)

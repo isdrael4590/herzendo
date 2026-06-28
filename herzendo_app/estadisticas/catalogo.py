@@ -1,6 +1,7 @@
 from pacientes.models import (
     SI_NO, SI_NO_NA, SEXO, INSTRUCCION, ETNIA, INTERP,
     PROLACT_INTERP, TUMOR_INTERP, KI67_INTERP, TIPO_HISTOLOGICO, KNOSP,
+    DIAGNOSTICO_TIPOS,
 )
 
 ESTADO_CHOICES = [('pendiente', 'Pendiente'), ('completado', 'Completado')]
@@ -19,6 +20,7 @@ SECCIONES = [
             {'campo': 'nivel_instruccion', 'label': 'Nivel de instrucción',   'tipo': 'categorico', 'choices': INSTRUCCION},
             {'campo': 'etnia',             'label': 'Etnia',                  'tipo': 'categorico', 'choices': ETNIA},
             {'campo': 'antecedentes_fam',  'label': 'Antec. fam. hipofisarios', 'tipo': 'categorico', 'choices': SI_NO},
+            {'campo': 'diagnostico',       'label': 'Diagnóstico (combinación)', 'tipo': 'categorico', 'choices': DIAGNOSTICO_TIPOS, 'multivalue': True, 'no_choices_filter': True},
             {'campo': 'estado',            'label': 'Estado del registro',    'tipo': 'categorico', 'choices': ESTADO_CHOICES},
         ],
     },
@@ -120,6 +122,44 @@ SECCIONES = [
             {'campo': 'reticulina_distorsionada', 'label': 'Reticulina distorsionada', 'tipo': 'categorico', 'choices': SI_NO},
             {'campo': 'ki67',                     'label': 'Ki-67 (%)',                'tipo': 'numerico'},
             {'campo': 'ki67_interp',              'label': 'Ki-67 Interpretación',     'tipo': 'categorico', 'choices': KI67_INTERP},
+        ],
+    },
+    {
+        'id': 'diagnostico_individual',
+        'label': 'Diagnóstico por tipo',
+        'icon': 'bi-check2-square',
+        'vars': [
+            {
+                'campo': 'diag_tipos_resumen',
+                'label': 'Diagnóstico por tipo (resumen)',
+                'tipo': 'resumen_tipos',
+                'source_campo': 'diagnostico',
+                'tipos': DIAGNOSTICO_TIPOS,
+            },
+            {
+                'campo': 'diag_clinico',
+                'label': 'Diagnóstico Clínico',
+                'tipo': 'categorico',
+                'choices': SI_NO,
+                'source_campo': 'diagnostico',
+                'multivalue_extract': 'clinico',
+            },
+            {
+                'campo': 'diag_bioquimico',
+                'label': 'Diagnóstico Bioquímico',
+                'tipo': 'categorico',
+                'choices': SI_NO,
+                'source_campo': 'diagnostico',
+                'multivalue_extract': 'bioquimico',
+            },
+            {
+                'campo': 'diag_anatomopatologico',
+                'label': 'Diagnóstico Anatomopatológico',
+                'tipo': 'categorico',
+                'choices': SI_NO,
+                'source_campo': 'diagnostico',
+                'multivalue_extract': 'anatomopatologico',
+            },
         ],
     },
 ]
